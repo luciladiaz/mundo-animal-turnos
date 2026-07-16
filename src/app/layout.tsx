@@ -32,10 +32,20 @@ export default async function RootLayout({
 }>) {
   // Colores de marca del negocio, aplicados como variables CSS en runtime —
   // así el cliente ve la identidad real de la veterinaria, no un diseño genérico
-  // fijado en tiempo de build.
-  const configuracion = await prisma.configuracionNegocio.findFirst();
-  const colorPrimario = configuracion?.colorPrimario ?? "#7b2d8e";
-  const colorSecundario = configuracion?.colorSecundario ?? "#1c8fc7";
+  // fijado en tiempo de build. Si la base no responde (ej: build prerenderizando
+  // /_not-found sin conexión todavía lista), seguimos con los colores por defecto
+  // en vez de tirar abajo todo el build/deploy por un problema pasajero de red.
+  let colorPrimario = "#7b2d8e";
+  let colorSecundario = "#1c8fc7";
+  try {
+    const configuracion = await prisma.configuracionNegocio.findFirst();
+    if (configuracion) {
+      colorPrimario = configuracion.colorPrimario;
+      colorSecundario = configuracion.colorSecundario;
+    }
+  } catch (err) {
+    console.error("No se pudo leer ConfiguracionNegocio, usando colores por defecto:", err);
+  }
 
   return (
     <html
