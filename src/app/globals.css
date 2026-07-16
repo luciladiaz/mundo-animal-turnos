@@ -1,26 +1,254 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf8fb;
+  --foreground: #241d2b;
+
+  /* Colores de marca del negocio — se sobreescriben en runtime (ver src/app/layout.tsx)
+     con los valores reales de ConfiguracionNegocio, para que cada cliente vea su propia
+     identidad en vez de un diseño genérico. Estos son solo el fallback antes de cargar
+     (violeta + azul reales del logo de Mundo Animal). */
+  --color-primario: #7b2d8e;
+  --color-secundario: #1c8fc7;
+}
+
+/* Paleta ampliada derivada de los 2 colores de marca, más neutros y semánticos propios —
+   nombres en español para no chocar con las escalas por defecto de Tailwind (violet/sky/stone
+   ya existen con otros tonos) y para mantener el mismo idioma que el resto del código. */
+@theme {
+  /* Mora — escala del violeta de marca (#7B2D8E = mora-600) */
+  --color-mora-50: #f7eef9;
+  --color-mora-100: #ecd9f1;
+  --color-mora-200: #d7b3e3;
+  --color-mora-300: #bd87d1;
+  --color-mora-400: #a15cb9;
+  --color-mora-500: #8a3d9f;
+  --color-mora-600: #7b2d8e;
+  --color-mora-700: #632373;
+  --color-mora-800: #4a1a54;
+  --color-mora-900: #33123a;
+
+  /* Celeste — escala del azul de marca (#1C8FC7 = celeste-500) */
+  --color-celeste-50: #eaf6fc;
+  --color-celeste-100: #cdeaf7;
+  --color-celeste-200: #9bd5ef;
+  --color-celeste-300: #63bce3;
+  --color-celeste-400: #359fd2;
+  --color-celeste-500: #1c8fc7;
+  --color-celeste-600: #16719d;
+  --color-celeste-700: #125777;
+  --color-celeste-800: #0d3f55;
+  --color-celeste-900: #082a39;
+
+  /* Humo — neutros con un leve sesgo violeta en vez de gris puro, para que combinen
+     con la mora/celeste en vez de sentirse "pegados" a la marca. */
+  --color-humo-50: #faf8fb;
+  --color-humo-100: #f2eef5;
+  --color-humo-200: #e4dee9;
+  --color-humo-300: #cec3d5;
+  --color-humo-400: #a89bb1;
+  --color-humo-500: #7d7186;
+  --color-humo-600: #5c5164;
+  --color-humo-700: #443b4b;
+  --color-humo-800: #2e2735;
+  --color-humo-900: #1c1721;
+
+  /* Semánticos — independientes del acento de marca, para que el estado de un turno
+     (confirmado/cancelado/completado) se lea igual sin importar qué colores tenga cada cliente. */
+  --color-exito-50: #eaf7ee;
+  --color-exito-500: #2f9e5b;
+  --color-exito-600: #24824a;
+  --color-alerta-50: #fbf1de;
+  --color-alerta-500: #c77d1c;
+  --color-alerta-600: #a3650f;
+  --color-peligro-50: #faeaec;
+  --color-peligro-500: #c23b4b;
+  --color-peligro-600: #a12e3c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primario: var(--color-primario);
+  --color-secundario: var(--color-secundario);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-jakarta);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1c1721;
+    --foreground: #f2eef5;
   }
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1300px 700px at 6% -12%, color-mix(in srgb, var(--color-secundario) 26%, transparent), transparent 55%),
+    radial-gradient(1100px 680px at 108% -8%, color-mix(in srgb, var(--color-primario) 26%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--color-mora-100) 0%, color-mix(in srgb, var(--color-celeste-50) 70%, var(--background)) 38%, var(--background) 75%);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+}
+
+/* Botones — sistema unificado para toda la app: primario con degradé de marca
+   y profundidad sutil, secundario neutro, peligro para acciones destructivas,
+   ghost para acciones terciarias tipo texto (volver, agregar bloque). */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+  color: #fff;
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--color-primario) 35%, transparent),
+    0 10px 24px -10px color-mix(in srgb, var(--color-primario) 55%, transparent);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--color-primario) 40%, transparent),
+    0 14px 28px -8px color-mix(in srgb, var(--color-primario) 60%, transparent);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.97);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-primario) 35%, transparent);
+}
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #fff;
+  border: 1px solid var(--color-humo-200);
+  color: var(--color-humo-600);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-humo-50);
+  border-color: var(--color-humo-300);
+  color: var(--color-humo-800);
+}
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--color-peligro-500) 35%, transparent);
+  color: var(--color-peligro-600);
+  transition: background 0.15s ease;
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-peligro-50);
+}
+
+.btn-ghost {
+  color: var(--color-humo-500);
+  transition: color 0.15s ease;
+}
+.btn-ghost:hover {
+  color: var(--color-humo-800);
+}
+
+/* Sombra suave de marca para tarjetas — un poco de tinte violeta en vez de
+   gris puro, para que se sienta más cálida sobre el fondo con degradé. */
+.card-suave {
+  box-shadow:
+    0 1px 2px rgba(28, 23, 33, 0.05),
+    0 12px 30px -14px color-mix(in srgb, var(--color-primario) 38%, transparent);
+}
+
+/* Franja de acento debajo del header — un toque de color de marca sin
+   recargar la interfaz, para que el panel se sienta menos "admin genérico". */
+.franja-acento {
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+}
+
+@keyframes flotar1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(24px, -34px) rotate(6deg); }
+}
+@keyframes flotar2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-28px, 28px) rotate(-6deg); }
+}
+@keyframes flotarSuave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+/* Fondo de la página pública de reserva — degradé fuerte violeta→celeste
+   de marca con círculos decorativos flotantes (eco del anillo del logo). */
+.fondo-reserva {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(160deg, #5b1e6b 0%, #7b2d8e 35%, #8e3ba3 60%, #1c8fc7 100%);
+}
+.fondo-reserva .circulo-1 {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+.fondo-reserva .punto {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+
+/* Franja/banner de marca en el header del panel admin — mismo degradé,
+   con un aro decorativo grande detrás del logo. */
+.banner-admin {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #5b1e6b 0%, #7b2d8e 45%, #8e3ba3 70%, #1c8fc7 100%);
+}
+.banner-admin .aro {
+  position: absolute;
+  top: 8px;
+  left: 32%;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+.banner-admin .punto {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+.pildora-nav {
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }

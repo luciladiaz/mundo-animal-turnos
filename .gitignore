@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# prisma (SQLite dev database)
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# logo subido por el admin (contenido de cada instalación, no del código fuente)
+/public/uploads/*
+!/public/uploads/.gitkeep
 
 # vercel
 .vercel

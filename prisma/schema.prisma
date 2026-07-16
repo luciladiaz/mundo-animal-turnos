@@ -1,0 +1,90 @@
+// Schema de la base de datos — Mundo Animal (gestión de turnos)
+//
+// Decisión de diseño: fecha/horaInicio/horaFin se guardan como strings
+// ("2026-07-15", "09:00") en vez de DateTime. Como la zona horaria de la app
+// está fija en America/Argentina/Buenos_Aires (sin horario de verano desde 2009),
+// esto evita por completo bugs de conversión UTC/local — lo que ves en la base
+// es literalmente la hora de pared que el cliente reservó.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoTurno {
+  PENDIENTE // recién cargado, todavía sin confirmar con el cliente
+  CONFIRMADO
+  CANCELADO
+  COMPLETADO
+}
+
+model Servicio {
+  id              String   @id @default(cuid())
+  nombre          String
+  descripcion     String?
+  duracionMinutos Int
+  precio          Float?
+  activo          Boolean  @default(true)
+  turnos          Turno[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ConfiguracionNegocio {
+  id              String  @id @default(cuid())
+  nombre          String
+  logoUrl         String?
+  colorPrimario   String  @default("#0F766E")
+  colorSecundario String  @default("#F59E0B")
+  direccion       String?
+  telefono        String?
+  bufferMinutos   Int     @default(10)
+}
+
+// Uno o más bloques de atención por día de semana (ej. Lunes 09:00-13:00 y 15:00-19:00).
+// Un día sin ningún bloque = día cerrado.
+model HorarioBloque {
+  id         String @id @default(cuid())
+  diaSemana  Int // 0 = domingo, 1 = lunes ... 6 = sábado
+  horaInicio String // "09:00"
+  horaFin    String // "13:00"
+
+  @@index([diaSemana])
+}
+
+model Turno {
+  id     String @id @default(cuid())
+
+  servicio   Servicio @relation(fields: [servicioId], references: [id])
+  servicioId String
+
+  fecha      String // "2026-07-15"
+  horaInicio String // "09:00"
+  horaFin    String // "09:30" — calculada: horaInicio + duración del servicio (el buffer se aplica al chequear disponibilidad, no se suma acá)
+
+  clienteNombre   String
+  clienteTelefono String
+  clienteEmail    String?
+  mascotaNombre   String
+  mascotaEspecie  String?
+  notas           String?
+
+  estado    EstadoTurno @default(PENDIENTE)
+  createdAt DateTime    @default(now())
+
+  @@index([fecha])
+  @@index([servicioId, fecha])
+}
+
+model AdminUser {
+  id           String  @id @default(cuid())
+  nombre       String  @default("Usuario")
+  email        String  @unique
+  passwordHash String
+  rol          String  @default("admin") // "admin" | "secretaria"
+  activo       Boolean @default(true)
+}
