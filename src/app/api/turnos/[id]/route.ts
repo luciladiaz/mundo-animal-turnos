@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ESTADOS_OCUPAN_HORARIO, calcularHoraFin, haySolapamiento } from "@/lib/disponibilidad";
+import { tienePermiso } from "@/lib/autorizacion";
 
 const actualizarTurnoSchema = z.object({
   estado: z.enum(["PENDIENTE", "CONFIRMADO", "CANCELADO", "COMPLETADO"]).optional(),
@@ -12,8 +13,8 @@ const actualizarTurnoSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!tienePermiso(session, "turnos")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { id } = await params;

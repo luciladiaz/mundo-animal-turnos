@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import ConfiguracionPanel from "@/components/ConfiguracionPanel";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 export default async function ConfiguracionPage() {
   const session = await auth();
-  if (!esAdmin(session)) redirect("/admin/turnos");
+  if (!tienePermiso(session, "configuracion")) redirect("/admin");
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">

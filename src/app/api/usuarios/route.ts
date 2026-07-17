@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { esAdmin } from "@/lib/autorizacion";
 
-// GET: listado de usuarios admin (solo rol admin).
+const PESTAÑAS = ["turnos", "servicios", "configuracion"] as const;
+
+// GET: listado de usuarios (solo esAdmin).
 export async function GET() {
   const session = await auth();
   if (!esAdmin(session)) {
@@ -14,7 +16,7 @@ export async function GET() {
   }
 
   const usuarios = await prisma.adminUser.findMany({
-    select: { id: true, nombre: true, email: true, rol: true, activo: true },
+    select: { id: true, nombre: true, email: true, esAdmin: true, permisos: true, activo: true },
     orderBy: { nombre: "asc" },
   });
   return NextResponse.json({ usuarios });
@@ -27,10 +29,11 @@ const crearUsuarioSchema = z.object({
     .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
     .regex(/^\S+$/, "El nombre de usuario no puede tener espacios"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
-  rol: z.enum(["admin", "secretaria"]),
+  esAdmin: z.boolean(),
+  permisos: z.array(z.enum(PESTAÑAS)).default([]),
 });
 
-// POST: crear un usuario nuevo (solo rol admin).
+// POST: crear un usuario nuevo (solo esAdmin).
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!esAdmin(session)) {
@@ -43,13 +46,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Datos inválidos" }, { status: 400 });
   }
 
-  const { nombre, email, password, rol } = parsed.data;
+  const { nombre, email, password, esAdmin: nuevoEsAdmin, permisos } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
   try {
     const usuario = await prisma.adminUser.create({
-      data: { nombre, email, passwordHash, rol },
-      select: { id: true, nombre: true, email: true, rol: true, activo: true },
+      data: { nombre, email, passwordHash, esAdmin: nuevoEsAdmin, permisos: nuevoEsAdmin ? [] : permisos },
+      select: { id: true, nombre: true, email: true, esAdmin: true, permisos: true, activo: true },
     });
     return NextResponse.json({ usuario }, { status: 201 });
   } catch (err) {

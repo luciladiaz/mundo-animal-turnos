@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 // GET: público — la página de reserva necesita el logo/colores/nombre para mostrarse con la marca del negocio.
 export async function GET() {
@@ -22,7 +22,7 @@ const actualizarConfigSchema = z.object({
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "configuracion")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

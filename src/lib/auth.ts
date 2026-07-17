@@ -25,7 +25,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const passwordOk = await bcrypt.compare(password, admin.passwordHash);
         if (!passwordOk) return null;
 
-        return { id: admin.id, email: admin.email, name: admin.nombre, role: admin.rol };
+        return {
+          id: admin.id,
+          email: admin.email,
+          name: admin.nombre,
+          esAdmin: admin.esAdmin,
+          permisos: admin.permisos,
+        };
       },
     }),
   ],
@@ -33,13 +39,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.callbacks,
     jwt: async ({ token, user }) => {
       if (user) {
-        token.role = (user as { role?: string }).role;
+        const u = user as { esAdmin?: boolean; permisos?: string[] };
+        token.esAdmin = u.esAdmin;
+        token.permisos = u.permisos;
       }
       return token;
     },
     session: async ({ session, token }) => {
       if (session.user) {
-        (session.user as { role?: string }).role = token.role as string | undefined;
+        const u = session.user as { esAdmin?: boolean; permisos?: string[] };
+        u.esAdmin = token.esAdmin as boolean | undefined;
+        u.permisos = token.permisos as string[] | undefined;
       }
       return session;
     },

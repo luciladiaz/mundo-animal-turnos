@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 // GET: público (solo servicios activos) o admin (todos, con ?todos=1)
 export async function GET(req: NextRequest) {
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   if (quiereTodos) {
     const session = await auth();
-    if (!esAdmin(session)) {
+    if (!tienePermiso(session, "servicios")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
     const servicios = await prisma.servicio.findMany({ orderBy: { createdAt: "asc" } });
@@ -36,7 +36,7 @@ const crearServicioSchema = z.object({
 // POST: crear servicio (solo admin)
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "servicios")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

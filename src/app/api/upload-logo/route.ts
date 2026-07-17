@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 const EXTENSIONES_PERMITIDAS: Record<string, string> = {
   "image/png": "png",
@@ -16,7 +16,7 @@ const EXTENSIONES_PERMITIDAS: Record<string, string> = {
 // archivo escrito en /public/uploads no sobrevive en producción.
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "configuracion")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

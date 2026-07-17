@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 const actualizarServicioSchema = z.object({
   nombre: z.string().min(1).optional(),
@@ -14,7 +14,7 @@ const actualizarServicioSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "servicios")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "servicios")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

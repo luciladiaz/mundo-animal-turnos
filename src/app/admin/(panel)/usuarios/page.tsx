@@ -5,7 +5,7 @@ import { esAdmin } from "@/lib/autorizacion";
 
 export default async function UsuariosPage() {
   const session = await auth();
-  if (!esAdmin(session)) redirect("/admin/turnos");
+  if (!esAdmin(session)) redirect("/admin");
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">

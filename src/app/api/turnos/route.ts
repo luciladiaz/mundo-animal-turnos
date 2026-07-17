@@ -11,6 +11,7 @@ import {
   haySolapamiento,
   horaAMinutos,
 } from "@/lib/disponibilidad";
+import { tienePermiso } from "@/lib/autorizacion";
 import { enviarConfirmacionCliente, enviarNotificacionAdmin } from "@/lib/email";
 
 const crearTurnoSchema = z.object({
@@ -122,8 +123,8 @@ export async function POST(req: NextRequest) {
 // GET: listado de turnos para el admin (protegido), con filtro opcional por fecha o rango.
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!tienePermiso(session, "turnos")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

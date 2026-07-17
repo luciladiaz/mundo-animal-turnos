@@ -6,17 +6,20 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { esAdmin } from "@/lib/autorizacion";
 
+const PESTAÑAS = ["turnos", "servicios", "configuracion"] as const;
+
 /** true si, sacando a `id`, no quedaría ningún admin activo (para no bloquear el acceso a todo el panel). */
 async function esUltimoAdminActivo(id: string): Promise<boolean> {
   const otrosAdminsActivos = await prisma.adminUser.count({
-    where: { id: { not: id }, rol: "admin", activo: true },
+    where: { id: { not: id }, esAdmin: true, activo: true },
   });
   return otrosAdminsActivos === 0;
 }
 
 const actualizarUsuarioSchema = z.object({
   nombre: z.string().min(1).optional(),
-  rol: z.enum(["admin", "secretaria"]).optional(),
+  esAdmin: z.boolean().optional(),
+  permisos: z.array(z.enum(PESTAÑAS)).optional(),
   activo: z.boolean().optional(),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").optional(),
 });
@@ -33,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Datos inválidos" }, { status: 400 });
   }
-  const { nombre, rol, activo, password } = parsed.data;
+  const { nombre, esAdmin: nuevoEsAdmin, permisos, activo, password } = parsed.data;
 
   const usuarioExistente = await prisma.adminUser.findUnique({ where: { id } });
   if (!usuarioExistente) {
@@ -41,8 +44,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const dejariaSinAdmin =
-    ((rol && rol !== "admin") || activo === false) &&
-    usuarioExistente.rol === "admin" &&
+    ((nuevoEsAdmin === false) || activo === false) &&
+    usuarioExistente.esAdmin &&
     usuarioExistente.activo &&
     (await esUltimoAdminActivo(id));
   if (dejariaSinAdmin) {
@@ -54,14 +57,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const data: Prisma.AdminUserUpdateInput = {};
   if (nombre !== undefined) data.nombre = nombre;
-  if (rol !== undefined) data.rol = rol;
+  if (nuevoEsAdmin !== undefined) data.esAdmin = nuevoEsAdmin;
+  if (permisos !== undefined) data.permisos = permisos;
   if (activo !== undefined) data.activo = activo;
   if (password !== undefined) data.passwordHash = await bcrypt.hash(password, 10);
 
   const usuario = await prisma.adminUser.update({
     where: { id },
     data,
-    select: { id: true, nombre: true, email: true, rol: true, activo: true },
+    select: { id: true, nombre: true, email: true, esAdmin: true, permisos: true, activo: true },
   });
   return NextResponse.json({ usuario });
 }
@@ -78,7 +82,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
 
-  if (usuarioExistente.rol === "admin" && usuarioExistente.activo && (await esUltimoAdminActivo(id))) {
+  if (usuarioExistente.esAdmin && usuarioExistente.activo && (await esUltimoAdminActivo(id))) {
     return NextResponse.json(
       { error: "No se puede eliminar al único administrador activo" },
       { status: 400 }

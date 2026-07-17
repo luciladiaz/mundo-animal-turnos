@@ -82,10 +82,14 @@ model Turno {
 }
 
 model AdminUser {
-  id           String  @id @default(cuid())
-  nombre       String  @default("Usuario")
-  email        String  @unique
+  id           String   @id @default(cuid())
+  nombre       String   @default("Usuario")
+  email        String   @unique
   passwordHash String
-  rol          String  @default("admin") // "admin" | "secretaria"
-  activo       Boolean @default(true)
+  // esAdmin: acceso total + único rol que puede gestionar usuarios (no configurable por tab, por seguridad).
+  esAdmin      Boolean  @default(false)
+  // Pestañas habilitadas cuando esAdmin=false: "turnos" | "servicios" | "configuracion".
+  // Dashboard queda siempre visible para cualquier usuario activo, y Usuarios es exclusivo de esAdmin.
+  permisos     String[] @default([])
+  activo       Boolean  @default(true)
 }

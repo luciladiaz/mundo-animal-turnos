@@ -1,24 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { esAdmin, tienePermiso } from "@/lib/autorizacion";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import LogoutButton from "@/components/LogoutButton";
 import MarcaBadge from "@/components/MarcaBadge";
 import NavLinks from "@/components/NavLinks";
 
-const NAV_BASE = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/turnos", label: "Turnos" },
-];
-const NAV_SOLO_ADMIN = [
-  { href: "/admin/servicios", label: "Servicios" },
-  { href: "/admin/usuarios", label: "Usuarios" },
-  { href: "/admin/configuracion", label: "Configuración" },
-];
-
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const [session, configuracion] = await Promise.all([auth(), prisma.configuracionNegocio.findFirst()]);
-  const nav = esAdmin(session) ? [...NAV_BASE, ...NAV_SOLO_ADMIN] : NAV_BASE;
+
+  const nav = [{ href: "/admin", label: "Dashboard" }];
+  if (tienePermiso(session, "turnos")) nav.push({ href: "/admin/turnos", label: "Turnos" });
+  if (tienePermiso(session, "servicios")) nav.push({ href: "/admin/servicios", label: "Servicios" });
+  if (esAdmin(session)) nav.push({ href: "/admin/usuarios", label: "Usuarios" });
+  if (tienePermiso(session, "configuracion")) nav.push({ href: "/admin/configuracion", label: "Configuración" });
+
   const nombreCompleto = (session?.user as { name?: string } | undefined)?.name ?? session?.user?.email ?? "";
   const primerNombre = nombreCompleto.split(" ")[0];
   const negocioNombre = configuracion?.nombre ?? "Panel";
@@ -44,14 +40,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm text-white/90">
-              <span>
-                Hola, {primerNombre} 👋
-                {(session?.user as { role?: string } | undefined)?.role === "secretaria" && (
-                  <span className="ml-1.5 rounded-full bg-white/20 px-2 py-0.5 text-xs text-white">
-                    Secretaria
-                  </span>
-                )}
-              </span>
+              <span>Hola, {primerNombre} 👋</span>
               <LogoutButton />
             </div>
           </div>

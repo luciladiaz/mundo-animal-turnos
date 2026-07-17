@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 // GET: público — el calendario de reserva necesita saber qué días están habilitados.
 export async function GET() {
@@ -24,7 +24,7 @@ const reemplazarSchema = z.object({ bloques: z.array(bloqueSchema) });
 // a errores que un CRUD fino de bloques individuales para una grilla tan chica.
 export async function PUT(req: NextRequest) {
   const session = await auth();
-  if (!esAdmin(session)) {
+  if (!tienePermiso(session, "configuracion")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

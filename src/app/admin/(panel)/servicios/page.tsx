@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import ServiciosPanel from "@/components/ServiciosPanel";
 import { auth } from "@/lib/auth";
-import { esAdmin } from "@/lib/autorizacion";
+import { tienePermiso } from "@/lib/autorizacion";
 
 export default async function ServiciosPage() {
   const session = await auth();
-  if (!esAdmin(session)) redirect("/admin/turnos");
+  if (!tienePermiso(session, "servicios")) redirect("/admin");
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
