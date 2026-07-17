@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { ConfiguracionNegocio, HorarioBloque } from "@prisma/client";
+import DiasCerradosPanel from "@/components/DiasCerradosPanel";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -324,6 +325,8 @@ export default function ConfiguracionPanel() {
           </button>
         </div>
       </section>
+
+      <DiasCerradosPanel />
     </div>
   );
 }

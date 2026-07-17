@@ -32,10 +32,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Servicio no encontrado o no disponible" }, { status: 404 });
   }
 
-  const [configuracion, diaSemana] = [
+  const [configuracion, diaSemana, diaCerrado] = [
     await prisma.configuracionNegocio.findFirst(),
     getDiaSemana(fecha),
+    await prisma.diaCerrado.findUnique({ where: { fecha } }),
   ];
+
+  if (diaCerrado) {
+    return NextResponse.json({ slots: [], cerrado: true });
+  }
 
   const bloques = await prisma.horarioBloque.findMany({
     where: { diaSemana },

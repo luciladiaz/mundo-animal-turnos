@@ -7,6 +7,7 @@ import { getDiaSemana, sumarDias } from "@/lib/disponibilidad";
 interface Props {
   servicios: Servicio[];
   bloques: HorarioBloque[];
+  diasCerrados: string[];
   fechaHoy: string;
   negocioNombre: string;
 }
@@ -67,7 +68,7 @@ function IconoServicio({ nombre }: { nombre: string }) {
   );
 }
 
-export default function ReservaWizard({ servicios, bloques, fechaHoy, negocioNombre }: Props) {
+export default function ReservaWizard({ servicios, bloques, diasCerrados, fechaHoy, negocioNombre }: Props) {
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null);
@@ -87,14 +88,15 @@ export default function ReservaWizard({ servicios, bloques, fechaHoy, negocioNom
 
   const diasDisponibles = useMemo(() => {
     const diasConBloque = new Set(bloques.map((b) => b.diaSemana));
+    const fechasCerradas = new Set(diasCerrados);
     const dias: { fecha: string; diaSemana: number; habilitado: boolean }[] = [];
     for (let i = 0; i < DIAS_A_MOSTRAR; i++) {
       const fecha = sumarDias(fechaHoy, i);
       const diaSemana = getDiaSemana(fecha);
-      dias.push({ fecha, diaSemana, habilitado: diasConBloque.has(diaSemana) });
+      dias.push({ fecha, diaSemana, habilitado: diasConBloque.has(diaSemana) && !fechasCerradas.has(fecha) });
     }
     return dias;
-  }, [bloques, fechaHoy]);
+  }, [bloques, diasCerrados, fechaHoy]);
 
   async function elegirServicio(servicio: Servicio) {
     setServicioSeleccionado(servicio);

@@ -81,6 +81,17 @@ model Turno {
   @@index([servicioId, fecha])
 }
 
+// Fechas puntuales sin atención (feriados, cierres especiales) — distinto del
+// horario semanal fijo de HorarioBloque. Un día acá bloquea la reserva sin
+// importar qué diga el horario habitual de ese día de la semana.
+model DiaCerrado {
+  id     String  @id @default(cuid())
+  fecha  String  @unique // "2026-12-25"
+  motivo String? // ej: "Feriado", opcional
+
+  @@index([fecha])
+}
+
 model AdminUser {
   id           String   @id @default(cuid())
   nombre       String   @default("Usuario")

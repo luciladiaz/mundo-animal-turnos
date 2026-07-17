@@ -6,10 +6,11 @@ import MarcaBadge from "@/components/MarcaBadge";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [servicios, bloques, configuracion] = await Promise.all([
+  const [servicios, bloques, configuracion, diasCerrados] = await Promise.all([
     prisma.servicio.findMany({ where: { activo: true }, orderBy: { createdAt: "asc" } }),
     prisma.horarioBloque.findMany(),
     prisma.configuracionNegocio.findFirst(),
+    prisma.diaCerrado.findMany({ select: { fecha: true } }),
   ]);
 
   const negocioNombre = configuracion?.nombre ?? "Mundo Animal";
@@ -42,6 +43,7 @@ export default async function Home() {
           <ReservaWizard
             servicios={servicios}
             bloques={bloques}
+            diasCerrados={diasCerrados.map((d) => d.fecha)}
             fechaHoy={getFechaHoyArgentina()}
             negocioNombre={negocioNombre}
           />

@@ -51,6 +51,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ese horario ya pasó, elegí otro" }, { status: 400 });
   }
 
+  const diaCerrado = await prisma.diaCerrado.findUnique({ where: { fecha: datos.fecha } });
+  if (diaCerrado) {
+    return NextResponse.json({ error: "Ese día no se atiende, elegí otra fecha" }, { status: 400 });
+  }
+
   const horaFin = calcularHoraFin(datos.horaInicio, servicio.duracionMinutos);
 
   try {
