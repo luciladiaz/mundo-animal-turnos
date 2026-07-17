@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  /* La app tiene un solo tema (claro, violeta/blanco) — no diseñado para modo oscuro.
+     Fijamos color-scheme: light para que el navegador no le aplique su propio estilo
+     oscuro a inputs/scrollbars cuando el celular está en modo oscuro (si no, el texto
+     que se escribe queda claro sobre fondo blanco y se ve invisible). */
+  color-scheme: light;
   --background: #faf8fb;
   --foreground: #241d2b;
 
@@ -75,11 +80,12 @@
   --font-sans: var(--font-jakarta);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1c1721;
-    --foreground: #f2eef5;
-  }
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
 }
 
 body {
@@ -87,9 +93,27 @@ body {
     radial-gradient(1300px 700px at 6% -12%, color-mix(in srgb, var(--color-secundario) 26%, transparent), transparent 55%),
     radial-gradient(1100px 680px at 108% -8%, color-mix(in srgb, var(--color-primario) 26%, transparent), transparent 55%),
     linear-gradient(180deg, var(--color-mora-100) 0%, color-mix(in srgb, var(--color-celeste-50) 70%, var(--background)) 38%, var(--background) 75%);
-  background-attachment: fixed;
+  background-color: var(--background);
   color: var(--foreground);
-  min-height: 100%;
+}
+
+/* background-attachment: fixed tiene bugs conocidos en Safari/Chrome de celular
+   (deja zonas del fondo sin pintar, sobre todo con el rebote elástico al hacer
+   scroll) — solo lo activamos en pantallas grandes, donde sí funciona bien. */
+@media (min-width: 768px) {
+  body {
+    background-attachment: fixed;
+  }
+}
+
+/* Los campos de formulario siempre con texto oscuro sobre fondo claro, sin
+   importar el modo de color del sistema — evita el bug de "texto invisible"
+   al escribir desde un celular en modo oscuro. */
+input,
+textarea,
+select {
+  color: var(--color-humo-900);
+  background-color: #fff;
 }
 
 /* Botones — sistema unificado para toda la app: primario con degradé de marca
