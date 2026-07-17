@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { esAdmin } from "@/lib/autorizacion";
@@ -12,8 +11,9 @@ const EXTENSIONES_PERMITIDAS: Record<string, string> = {
   "image/svg+xml": "svg",
 };
 
-// Guarda el logo en /public/uploads. Simple y suficiente para un solo negocio;
-// si en el futuro esto sirve a múltiples clientes, migrar a un storage real (S3/Supabase Storage).
+// Guarda el logo en Vercel Blob (storage persistente) — el filesystem local de
+// Vercel es efímero (se borra en cada deploy/reinicio de función), así que un
+// archivo escrito en /public/uploads no sobrevive en producción.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!esAdmin(session)) {
@@ -39,14 +39,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "El archivo no puede pesar más de 3MB" }, { status: 400 });
   }
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
+  const nombreArchivo = `logos/logo-${Date.now()}.${extension}`;
+  const blob = await put(nombreArchivo, file, {
+    access: "public",
+    addRandomSuffix: false,
+  });
 
-  const nombreArchivo = `logo-${Date.now()}.${extension}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadsDir, nombreArchivo), bytes);
-
-  const logoUrl = `/uploads/${nombreArchivo}`;
+  const logoUrl = blob.url;
 
   const existente = await prisma.configuracionNegocio.findFirst();
   const configuracion = existente
