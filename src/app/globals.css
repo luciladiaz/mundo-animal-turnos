@@ -273,32 +273,27 @@ select {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-/* ── Landing (/landing) — tratamiento oscuro y dramático, alto contraste,
-   con violeta/celeste "brillando" como si tuvieran luz propia. ── */
-
-/* Violeta de marca como color dominante — el celeste queda como acento chico
-   en una esquina, no como una mitad de degradé compitiendo en igualdad. */
+/* ── Landing (/landing) — negro sólido tipo ReventApp: el fondo no lleva color,
+   el violeta/celeste de marca queda reservado a acentos puntuales (botones,
+   bordes, texto), no a un lavado de color de fondo. ── */
 .hero-landing {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(1100px 750px at 50% -5%, color-mix(in srgb, var(--color-primario) 62%, transparent), transparent 62%),
-    radial-gradient(500px 380px at 88% 92%, color-mix(in srgb, var(--color-secundario) 28%, transparent), transparent 65%),
-    linear-gradient(180deg, #150f1a 0%, #0d0a10 100%);
+  background: #0a0a0d;
 }
 
 .glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
+  filter: blur(70px);
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.22;
 }
 
 .seccion-oscura {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #1a1420 0%, #14101a 100%);
+  background: #101013;
 }
 
 .tarjeta-servicio {

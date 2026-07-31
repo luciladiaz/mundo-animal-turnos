@@ -38,7 +38,7 @@ export default function LandingTabs({
   return (
     <div className="bg-humo-50">
       {/* Nav flotante */}
-      <nav className="fixed inset-x-0 top-0 z-20 flex items-center justify-between bg-[#0d0a10]/70 px-4 py-3 backdrop-blur-md sm:px-8">
+      <nav className="fixed inset-x-0 top-0 z-20 flex items-center justify-between bg-[#0a0a0d]/70 px-4 py-3 backdrop-blur-md sm:px-8">
         <div className="flex items-center gap-2">
           <MarcaBadge logoUrl={logoUrl} nombre={negocioNombre} size={30} />
           <span className="font-display text-sm font-semibold text-white">{negocioNombre}</span>
@@ -58,8 +58,7 @@ export default function LandingTabs({
 
       {/* Hero */}
       <section id="inicio" className="hero-landing flex min-h-screen scroll-mt-16 flex-col items-center justify-center px-4 py-32 text-center">
-        <div className="glow-orb" style={{ top: "-14%", left: "50%", transform: "translateX(-50%)", width: 620, height: 620, background: "var(--color-primario)" }} />
-        <div className="glow-orb" style={{ bottom: "-12%", right: "-8%", width: 260, height: 260, background: "var(--color-secundario)", opacity: 0.35 }} />
+        <div className="glow-orb" style={{ top: "-8%", left: "50%", transform: "translateX(-50%)", width: 500, height: 500, background: "var(--color-primario)" }} />
 
         <div className="relative flex flex-col items-center">
           <div
