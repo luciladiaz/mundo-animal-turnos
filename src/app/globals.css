@@ -276,13 +276,15 @@ select {
 /* ── Landing (/landing) — tratamiento oscuro y dramático, alto contraste,
    con violeta/celeste "brillando" como si tuvieran luz propia. ── */
 
+/* Violeta de marca como color dominante — el celeste queda como acento chico
+   en una esquina, no como una mitad de degradé compitiendo en igualdad. */
 .hero-landing {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(900px 600px at 15% 15%, color-mix(in srgb, var(--color-primario) 55%, transparent), transparent 60%),
-    radial-gradient(800px 550px at 85% 25%, color-mix(in srgb, var(--color-secundario) 50%, transparent), transparent 60%),
-    linear-gradient(180deg, #14101a 0%, #0d0a10 100%);
+    radial-gradient(1100px 750px at 50% -5%, color-mix(in srgb, var(--color-primario) 62%, transparent), transparent 62%),
+    radial-gradient(500px 380px at 88% 92%, color-mix(in srgb, var(--color-secundario) 28%, transparent), transparent 65%),
+    linear-gradient(180deg, #150f1a 0%, #0d0a10 100%);
 }
 
 .glow-orb {

@@ -31,6 +31,24 @@ export default function IconoServicio({
       </svg>
     );
   }
+  if (n.includes("laborator")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 2v6.5L4.5 17a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L15 8.5V2" />
+        <path d="M9 2h6" />
+        <path d="M7.5 14h9" />
+      </svg>
+    );
+  }
+  if (n.includes("fisioterap") || n.includes("rehabilitaci")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" fill={stroke} stroke="none" />
+        <path d="M7 21l2.5-6L7 11l3-3 2 2h4" />
+        <path d="M12 10l1.5 4.5L18 16" />
+      </svg>
+    );
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={stroke} stroke="none">
       <ellipse cx="12" cy="15.5" rx="5" ry="4.2" />

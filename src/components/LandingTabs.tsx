@@ -5,6 +5,13 @@ import MarcaBadge from "@/components/MarcaBadge";
 import IconoServicio from "@/components/IconoServicio";
 import ReservaWizard from "@/components/ReservaWizard";
 
+// Prestaciones del centro que todavía no están cargadas como Servicio reservable
+// (sin duración/precio propios) — se muestran igual como parte de lo que se ofrece.
+const SERVICIOS_ADICIONALES = [
+  { nombre: "Laboratorio", descripcion: "Análisis clínicos y estudios diagnósticos." },
+  { nombre: "Fisioterapia", descripcion: "Rehabilitación y recuperación para tu mascota." },
+];
+
 interface Props {
   negocioNombre: string;
   logoUrl: string | null;
@@ -51,8 +58,8 @@ export default function LandingTabs({
 
       {/* Hero */}
       <section id="inicio" className="hero-landing flex min-h-screen scroll-mt-16 flex-col items-center justify-center px-4 py-32 text-center">
-        <div className="glow-orb" style={{ top: "-10%", left: "-10%", width: 480, height: 480, background: "var(--color-primario)" }} />
-        <div className="glow-orb" style={{ bottom: "-15%", right: "-10%", width: 420, height: 420, background: "var(--color-secundario)" }} />
+        <div className="glow-orb" style={{ top: "-14%", left: "50%", transform: "translateX(-50%)", width: 620, height: 620, background: "var(--color-primario)" }} />
+        <div className="glow-orb" style={{ bottom: "-12%", right: "-8%", width: 260, height: 260, background: "var(--color-secundario)", opacity: 0.35 }} />
 
         <div className="relative flex flex-col items-center">
           <div
@@ -98,29 +105,33 @@ export default function LandingTabs({
             Cuidado para cada etapa
           </h2>
 
-          {servicios.length === 0 ? (
-            <p className="text-center text-sm text-humo-500">Todavía no hay servicios cargados.</p>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {servicios.map((s) => (
-                <div key={s.id} className="tarjeta-servicio flex items-start gap-4 p-6">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mora-50">
-                    <IconoServicio nombre={s.nombre} size={24} />
-                  </span>
-                  <div className="flex flex-1 flex-col gap-1">
-                    <p className="font-display text-lg font-semibold text-humo-900">{s.nombre}</p>
-                    {s.descripcion && <p className="text-sm text-humo-500">{s.descripcion}</p>}
-                    <div className="mt-1 flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-wide text-humo-400">{s.duracionMinutos} min</span>
-                      <span className="font-display text-xl font-semibold tabular-nums text-[var(--color-primario)]">
-                        {s.precio != null ? `$${s.precio.toLocaleString("es-AR")}` : "Sin costo"}
-                      </span>
-                    </div>
-                  </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {servicios.map((s) => (
+              <div key={s.id} className="tarjeta-servicio flex items-center gap-4 p-6">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mora-50">
+                  <IconoServicio nombre={s.nombre} size={24} />
+                </span>
+                <div className="flex flex-1 flex-col gap-0.5">
+                  <p className="font-display text-lg font-semibold text-humo-900">{s.nombre}</p>
+                  {s.descripcion && <p className="text-sm text-humo-500">{s.descripcion}</p>}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+            {SERVICIOS_ADICIONALES.map((s) => (
+              <div key={s.nombre} className="tarjeta-servicio flex items-center gap-4 p-6">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mora-50">
+                  <IconoServicio nombre={s.nombre} size={24} />
+                </span>
+                <div className="flex flex-1 flex-col gap-0.5">
+                  <p className="font-display text-lg font-semibold text-humo-900">{s.nombre}</p>
+                  <p className="text-sm text-humo-500">{s.descripcion}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-center text-sm text-humo-500">
+            Los precios y duraciones se muestran al elegir el horario, en el paso de reserva.
+          </p>
         </div>
       </section>
 
