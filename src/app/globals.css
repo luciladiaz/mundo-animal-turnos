@@ -273,25 +273,37 @@ select {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-/* ── Landing (/landing) — degradé violeta oscuro suave (referencia: reventapp.com.ar,
-   mismo tipo de degradé pero en azul marino). El violeta de marca domina todo el
-   fondo, más rico arriba/centro y oscureciéndose hacia los bordes. ── */
+/* ── Landing (/landing) — fondo violeta oscuro sólido con un acento asimétrico
+   arriba a la derecha (no un glow centrado tipo "hero de app"): compone mejor
+   con el layout de dos columnas del hero, que ya rompe la simetría por sí solo. ── */
 .hero-landing {
   position: relative;
   overflow: hidden;
-  background: radial-gradient(
-    1400px 900px at 50% -8%,
-    var(--color-mora-700) 0%,
-    var(--color-mora-900) 45%,
-    #180b20 75%,
-    #0e0713 100%
-  );
+  background:
+    radial-gradient(900px 700px at 88% -12%, var(--color-mora-600) 0%, transparent 60%),
+    linear-gradient(180deg, var(--color-mora-900) 0%, #14081c 55%, #0e0713 100%);
 }
 
 .seccion-oscura {
   position: relative;
   overflow: hidden;
   background: linear-gradient(180deg, #1c0f28 0%, #12081a 100%);
+}
+
+/* Panel visual del hero — espacio reservado para la foto real de la Dra. Rojas
+   o el consultorio. Hasta que se cargue una imagen, un degradé de marca + una
+   huella tenue lo mantienen con identidad propia en vez de un vacío. */
+.panel-foto {
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--color-mora-500) 0%, var(--color-mora-800) 75%);
+  box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.55);
+}
+.panel-foto::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
 }
 
 .tarjeta-servicio {
