@@ -43,9 +43,11 @@ export default function IconoServicio({
   if (n.includes("fisioterap") || n.includes("rehabilitaci")) {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" fill={stroke} stroke="none" />
-        <path d="M7 21l2.5-6L7 11l3-3 2 2h4" />
-        <path d="M12 10l1.5 4.5L18 16" />
+        <ellipse cx="7.2" cy="15.5" rx="3" ry="2.7" />
+        <ellipse cx="3.6" cy="10.8" rx="1.3" ry="1.7" transform="rotate(-15 3.6 10.8)" />
+        <ellipse cx="6.6" cy="7.6" rx="1.3" ry="1.7" transform="rotate(-6 6.6 7.6)" />
+        <ellipse cx="10.4" cy="8.7" rx="1.2" ry="1.6" transform="rotate(10 10.4 8.7)" />
+        <path d="M13 17l1.8-3 1.4 2 1.8-3.5 1.5 2.5h2" />
       </svg>
     );
   }

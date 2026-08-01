@@ -61,20 +61,28 @@ export default function LandingTabs({
         <div className="relative flex flex-col items-center">
           <div
             className="mb-6 rounded-full p-1.5"
-            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))", boxShadow: "0 8px 24px -6px rgba(0,0,0,0.6)" }}
+            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.06))" }}
           >
-            <MarcaBadge logoUrl={logoUrl} nombre={negocioNombre} size={92} />
+            <MarcaBadge logoUrl={logoUrl} nombre={negocioNombre} size={80} />
           </div>
 
-          <span className="mb-4 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-white/70">
+          <span className="mb-6 flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-white/70">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-celeste-300)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
             Dra. Guadalupe Rojas
           </span>
 
-          <h1 className="max-w-3xl font-display text-5xl font-semibold leading-[1.05] text-white sm:text-7xl">
+          <h1 className="max-w-2xl font-display text-4xl font-semibold leading-[1.1] text-white sm:text-6xl">
             {negocioNombre}
           </h1>
-          <p className="mt-5 max-w-md text-lg text-white/70 sm:text-xl">Cuidados Perfectos</p>
-          <p className="mt-2 max-w-md text-sm text-white/50">
+          <p className="mt-1 max-w-2xl font-display text-4xl font-semibold leading-[1.1] text-[var(--color-celeste-300)] sm:text-6xl">
+            Cuidados Perfectos
+          </p>
+
+          <div className="mt-6 h-[3px] w-14 rounded-full" style={{ background: "var(--color-celeste-300)" }} />
+
+          <p className="mt-6 max-w-md text-base text-white/55 sm:text-lg">
             Atención veterinaria completa, cercana y de confianza para tu mascota.
           </p>
 
@@ -88,6 +96,21 @@ export default function LandingTabs({
             >
               Ver servicios
             </a>
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/45">
+            <span className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              Reservá en 1 minuto
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              Confirmación al instante
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              Sin costo de reserva
+            </span>
           </div>
         </div>
       </section>

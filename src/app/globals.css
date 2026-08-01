@@ -273,27 +273,25 @@ select {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-/* ── Landing (/landing) — negro sólido tipo ReventApp: el fondo no lleva color,
-   el violeta/celeste de marca queda reservado a acentos puntuales (botones,
-   bordes, texto), no a un lavado de color de fondo. ── */
+/* ── Landing (/landing) — degradé violeta oscuro suave (referencia: reventapp.com.ar,
+   mismo tipo de degradé pero en azul marino). El violeta de marca domina todo el
+   fondo, más rico arriba/centro y oscureciéndose hacia los bordes. ── */
 .hero-landing {
   position: relative;
   overflow: hidden;
-  background: #0a0a0d;
-}
-
-.glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  pointer-events: none;
-  opacity: 0.22;
+  background: radial-gradient(
+    1400px 900px at 50% -8%,
+    var(--color-mora-700) 0%,
+    var(--color-mora-900) 45%,
+    #180b20 75%,
+    #0e0713 100%
+  );
 }
 
 .seccion-oscura {
   position: relative;
   overflow: hidden;
-  background: #101013;
+  background: linear-gradient(180deg, #1c0f28 0%, #12081a 100%);
 }
 
 .tarjeta-servicio {
