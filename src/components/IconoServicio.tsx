@@ -40,6 +40,13 @@ export default function IconoServicio({
       </svg>
     );
   }
+  if (n.includes("odont") || n.includes("dental")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3c-2.4 0-3.5 1.6-4.8 1.6-1.6 0-2.7 1.4-2.7 3.3 0 3.7 1.6 9.6 3 9.6 1.1 0 1.1-2.6 2.3-2.6 1 0 1.1 1.5 2.2 1.5s1.2-1.5 2.2-1.5c1.2 0 1.2 2.6 2.3 2.6 1.4 0 3-5.9 3-9.6 0-1.9-1.1-3.3-2.7-3.3-1.3 0-2.4-1.6-4.8-1.6z" />
+      </svg>
+    );
+  }
   if (n.includes("fisioterap") || n.includes("rehabilitaci")) {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
