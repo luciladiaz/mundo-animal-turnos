@@ -64,8 +64,8 @@ export async function GET(req: NextRequest) {
   const slots = generarSlotsDisponibles({
     bloques,
     turnosOcupados,
-    duracionServicioMin: servicio.duracionMinutos,
-    bufferMin: configuracion?.bufferMinutos ?? 10,
+    duracionServicioMin: configuracion?.bufferMinutos ?? 10,
+    bufferMin: 0,
     horaMinima: esHoy ? getHoraAhoraArgentina() : undefined,
   });
 

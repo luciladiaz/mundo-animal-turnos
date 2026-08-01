@@ -7,7 +7,6 @@ import { tienePermiso } from "@/lib/autorizacion";
 const actualizarServicioSchema = z.object({
   nombre: z.string().min(1).optional(),
   descripcion: z.string().optional().nullable(),
-  duracionMinutos: z.number().int().positive().optional(),
   precio: z.number().nonnegative().optional().nullable(),
   activo: z.boolean().optional(),
 });

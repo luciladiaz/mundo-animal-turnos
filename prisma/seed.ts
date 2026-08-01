@@ -23,11 +23,11 @@ async function main() {
 
   // ── Servicios de ejemplo ────────────────────────────────────────────
   const serviciosEjemplo = [
-    { nombre: "Consulta general", duracionMinutos: 30, precio: 8000 },
-    { nombre: "Vacunación", duracionMinutos: 20, precio: 6000 },
-    { nombre: "Desparasitación", duracionMinutos: 15, precio: 4000 },
-    { nombre: "Baño y peluquería", duracionMinutos: 60, precio: 12000 },
-    { nombre: "Cirugía menor", duracionMinutos: 90, precio: 25000 },
+    { nombre: "Consulta general", precio: 8000 },
+    { nombre: "Vacunación", precio: 6000 },
+    { nombre: "Desparasitación", precio: 4000 },
+    { nombre: "Baño y peluquería", precio: 12000 },
+    { nombre: "Cirugía menor", precio: 25000 },
   ];
   for (const s of serviciosEjemplo) {
     const existe = await prisma.servicio.findFirst({ where: { nombre: s.nombre } });

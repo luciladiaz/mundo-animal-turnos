@@ -56,13 +56,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ese día no se atiende, elegí otra fecha" }, { status: 400 });
   }
 
-  const horaFin = calcularHoraFin(datos.horaInicio, servicio.duracionMinutos);
+  const configuracionPrevia = await prisma.configuracionNegocio.findFirst();
+  const duracionTurnoMin = configuracionPrevia?.bufferMinutos ?? 10;
+  const horaFin = calcularHoraFin(datos.horaInicio, duracionTurnoMin);
 
   try {
     const turno = await prisma.$transaction(async (tx) => {
-      const configuracion = await tx.configuracionNegocio.findFirst();
-      const bufferMin = configuracion?.bufferMinutos ?? 10;
-
       // Re-chequeo de solapamiento DENTRO de la transacción, justo antes de crear,
       // para minimizar la ventana de carrera si dos personas reservan a la vez.
       const turnosDelDia = await tx.turno.findMany({
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
         select: { horaInicio: true, horaFin: true },
       });
 
-      if (haySolapamiento(datos.horaInicio, horaFin, turnosDelDia, bufferMin)) {
+      if (haySolapamiento(datos.horaInicio, horaFin, turnosDelDia, 0)) {
         throw new SlotNoDisponibleError();
       }
 
@@ -91,7 +90,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Los emails van fuera de la transacción y nunca deben hacer fallar la reserva ya confirmada.
-    const configuracion = await prisma.configuracionNegocio.findFirst();
+    const configuracion = configuracionPrevia;
     const datosEmail = {
       clienteNombre: datos.clienteNombre,
       clienteEmail: datos.clienteEmail || null,

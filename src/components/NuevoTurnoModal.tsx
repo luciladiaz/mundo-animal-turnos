@@ -117,7 +117,7 @@ export default function NuevoTurnoModal({ fechaInicial, onClose, onCreated }: Pr
           >
             {servicios.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.nombre} ({s.duracionMinutos} min)
+                {s.nombre}
               </option>
             ))}
           </select>

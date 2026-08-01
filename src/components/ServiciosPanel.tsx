@@ -6,11 +6,10 @@ import type { Servicio } from "@prisma/client";
 interface FormServicio {
   nombre: string;
   descripcion: string;
-  duracionMinutos: string;
   precio: string;
 }
 
-const FORM_VACIO: FormServicio = { nombre: "", descripcion: "", duracionMinutos: "30", precio: "" };
+const FORM_VACIO: FormServicio = { nombre: "", descripcion: "", precio: "" };
 
 export default function ServiciosPanel() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
@@ -45,7 +44,6 @@ export default function ServiciosPanel() {
     setForm({
       nombre: s.nombre,
       descripcion: s.descripcion ?? "",
-      duracionMinutos: String(s.duracionMinutos),
       precio: s.precio != null ? String(s.precio) : "",
     });
     setMostrarForm(true);
@@ -59,7 +57,6 @@ export default function ServiciosPanel() {
     const payload = {
       nombre: form.nombre,
       descripcion: form.descripcion || undefined,
-      duracionMinutos: Number(form.duracionMinutos),
       precio: form.precio ? Number(form.precio) : null,
     };
 
@@ -120,30 +117,16 @@ export default function ServiciosPanel() {
               className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
             />
           </label>
-          <div className="flex gap-3">
-            <label className="flex flex-1 flex-col gap-1 text-sm">
-              <span className="text-humo-600">Duración (minutos)</span>
-              <input
-                required
-                type="number"
-                min={5}
-                step={5}
-                value={form.duracionMinutos}
-                onChange={(e) => setForm({ ...form, duracionMinutos: e.target.value })}
-                className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1 text-sm">
-              <span className="text-humo-600">Precio (opcional)</span>
-              <input
-                type="number"
-                min={0}
-                value={form.precio}
-                onChange={(e) => setForm({ ...form, precio: e.target.value })}
-                className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
-              />
-            </label>
-          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-humo-600">Precio (opcional)</span>
+            <input
+              type="number"
+              min={0}
+              value={form.precio}
+              onChange={(e) => setForm({ ...form, precio: e.target.value })}
+              className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
+            />
+          </label>
           <div className="flex gap-2">
             <button
               type="submit"
@@ -173,8 +156,7 @@ export default function ServiciosPanel() {
             <div>
               <p className={`font-medium ${s.activo ? "text-humo-900" : "text-humo-400"}`}>{s.nombre}</p>
               <p className="text-sm tabular-nums text-humo-500">
-                {s.duracionMinutos} min
-                {s.precio != null ? ` · $${s.precio.toLocaleString("es-AR")}` : ""}
+                {s.precio != null ? `$${s.precio.toLocaleString("es-AR")}` : "Sin precio"}
                 {!s.activo && " · inactivo"}
               </p>
             </div>

@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   const datos = parsed.data;
 
-  const turnoActual = await prisma.turno.findUnique({ where: { id }, include: { servicio: true } });
+  const turnoActual = await prisma.turno.findUnique({ where: { id } });
   if (!turnoActual) {
     return NextResponse.json({ error: "Turno no encontrado" }, { status: 404 });
   }
@@ -35,10 +35,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (seReprograma) {
     const nuevaFecha = datos.fecha ?? turnoActual.fecha;
     const nuevaHoraInicio = datos.horaInicio ?? turnoActual.horaInicio;
-    const nuevaHoraFin = calcularHoraFin(nuevaHoraInicio, turnoActual.servicio.duracionMinutos);
 
     const configuracion = await prisma.configuracionNegocio.findFirst();
-    const bufferMin = configuracion?.bufferMinutos ?? 10;
+    const duracionTurnoMin = configuracion?.bufferMinutos ?? 10;
+    const nuevaHoraFin = calcularHoraFin(nuevaHoraInicio, duracionTurnoMin);
 
     const otrosTurnosDelDia = await prisma.turno.findMany({
       where: {
@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       select: { horaInicio: true, horaFin: true },
     });
 
-    if (haySolapamiento(nuevaHoraInicio, nuevaHoraFin, otrosTurnosDelDia, bufferMin)) {
+    if (haySolapamiento(nuevaHoraInicio, nuevaHoraFin, otrosTurnosDelDia, 0)) {
       return NextResponse.json(
         { error: "Ese horario ya no está disponible, elegí otro" },
         { status: 409 }

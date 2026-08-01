@@ -165,9 +165,11 @@ export default function ReservaWizard({ servicios, bloques, diasCerrados, fechaH
               <span className="flex flex-1 flex-col items-start gap-0.5">
                 <span className="font-medium text-humo-900">{s.nombre}</span>
                 {s.descripcion && <span className="text-sm text-humo-500">{s.descripcion}</span>}
-                <span className="text-sm tabular-nums text-[var(--color-secundario)]">
-                  {s.duracionMinutos} min{s.precio ? ` · $${s.precio.toLocaleString("es-AR")}` : ""}
-                </span>
+                {s.precio ? (
+                  <span className="text-sm tabular-nums text-[var(--color-secundario)]">
+                    ${s.precio.toLocaleString("es-AR")}
+                  </span>
+                ) : null}
               </span>
             </button>
           ))}

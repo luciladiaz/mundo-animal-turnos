@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
 const crearServicioSchema = z.object({
   nombre: z.string().min(1),
   descripcion: z.string().optional(),
-  duracionMinutos: z.number().int().positive(),
   precio: z.number().nonnegative().optional().nullable(),
   activo: z.boolean().optional(),
 });

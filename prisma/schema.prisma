@@ -24,15 +24,14 @@ enum EstadoTurno {
 }
 
 model Servicio {
-  id              String   @id @default(cuid())
-  nombre          String
-  descripcion     String?
-  duracionMinutos Int
-  precio          Float?
-  activo          Boolean  @default(true)
-  turnos          Turno[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  precio      Float?
+  activo      Boolean  @default(true)
+  turnos      Turno[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ConfiguracionNegocio {

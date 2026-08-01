@@ -160,7 +160,7 @@ export default function LandingTabs({
             ))}
           </div>
           <p className="mt-6 text-center text-sm text-humo-500">
-            Los precios y duraciones se muestran al elegir el horario, en el paso de reserva.
+            Los precios se muestran al elegir el horario, en el paso de reserva.
           </p>
         </div>
       </section>

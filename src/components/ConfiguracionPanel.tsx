@@ -255,7 +255,7 @@ export default function ConfiguracionPanel() {
             </label>
           </div>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-humo-600">Buffer entre turnos (minutos)</span>
+            <span className="text-humo-600">Duración de cada turno (minutos)</span>
             <input
               type="number"
               min={0}
