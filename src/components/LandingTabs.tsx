@@ -58,12 +58,10 @@ export default function LandingTabs({
 
       {/* Hero */}
       <section id="inicio" className="hero-landing flex min-h-screen scroll-mt-16 flex-col items-center justify-center px-4 py-32 text-center">
-        <div className="glow-orb" style={{ top: "-8%", left: "50%", transform: "translateX(-50%)", width: 500, height: 500, background: "var(--color-primario)" }} />
-
         <div className="relative flex flex-col items-center">
           <div
             className="mb-6 rounded-full p-1.5"
-            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))", boxShadow: "0 0 60px -10px color-mix(in srgb, var(--color-primario) 70%, transparent)" }}
+            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))", boxShadow: "0 8px 24px -6px rgba(0,0,0,0.6)" }}
           >
             <MarcaBadge logoUrl={logoUrl} nombre={negocioNombre} size={92} />
           </div>
