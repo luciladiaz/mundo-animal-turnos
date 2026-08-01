@@ -10,6 +10,7 @@ import ReservaWizard from "@/components/ReservaWizard";
 const SERVICIOS_ADICIONALES = [
   { nombre: "Laboratorio", descripcion: "Análisis clínicos y estudios diagnósticos." },
   { nombre: "Fisioterapia", descripcion: "Rehabilitación y recuperación para tu mascota." },
+  { nombre: "Odontología", descripcion: "Limpieza y cuidado de la salud bucal de tu mascota." },
 ];
 
 interface Props {
