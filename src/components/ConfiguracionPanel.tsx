@@ -6,6 +6,11 @@ import DiasCerradosPanel from "@/components/DiasCerradosPanel";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
+// Dominio público real del negocio — el link para compartir siempre debe mostrar
+// este dominio, nunca la URL de deploy de Vercel desde la que se esté viendo el
+// panel admin (que cambia con cada deploy y no es la que ve el cliente).
+const DOMINIO_PUBLICO = "https://vetmundoanimal.com.ar";
+
 interface BloqueForm {
   horaInicio: string;
   horaFin: string;
@@ -17,7 +22,6 @@ export default function ConfiguracionPanel() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
-  const [linkPublico, setLinkPublico] = useState("");
   const [subiendoLogo, setSubiendoLogo] = useState(false);
 
   const [form, setForm] = useState({
@@ -66,7 +70,6 @@ export default function ConfiguracionPanel() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de datos al montar, patrón estándar.
     cargarTodo();
-    setLinkPublico(window.location.origin);
   }, [cargarTodo]);
 
   async function guardarConfig(e: React.FormEvent) {
@@ -168,11 +171,11 @@ export default function ConfiguracionPanel() {
         <div className="flex items-center gap-2">
           <input
             readOnly
-            value={linkPublico}
+            value={DOMINIO_PUBLICO}
             className="flex-1 rounded-lg border border-humo-200 bg-humo-50 px-3 py-2 text-sm text-humo-600"
           />
           <button
-            onClick={() => navigator.clipboard.writeText(linkPublico)}
+            onClick={() => navigator.clipboard.writeText(DOMINIO_PUBLICO)}
             className="btn-primary rounded-lg px-4 py-2 text-sm"
           >
             Copiar
