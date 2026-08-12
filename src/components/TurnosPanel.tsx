@@ -22,6 +22,15 @@ const ESTADO_BADGE: Record<string, string> = {
   CONFIRMADO: "bg-exito-50 text-exito-600",
   CANCELADO: "bg-humo-100 text-humo-400 line-through",
   COMPLETADO: "bg-celeste-50 text-celeste-600",
+  NO_ASISTIO: "bg-peligro-50 text-peligro-600",
+};
+
+const ESTADO_LABEL: Record<string, string> = {
+  PENDIENTE: "Pendiente",
+  CONFIRMADO: "Confirmado",
+  CANCELADO: "Cancelado",
+  COMPLETADO: "Asistió",
+  NO_ASISTIO: "No asistió",
 };
 
 // Origen del turno — distinto de ESTADO_BADGE (que ya usa mora/celeste/exito/alerta
@@ -152,7 +161,7 @@ export default function TurnosPanel() {
     setFechaRef(hoy);
   }
 
-  async function cambiarEstado(id: string, estado: "CONFIRMADO" | "CANCELADO" | "COMPLETADO") {
+  async function cambiarEstado(id: string, estado: "CONFIRMADO" | "CANCELADO" | "COMPLETADO" | "NO_ASISTIO") {
     setError(null);
     const res = await fetch(`/api/turnos/${id}`, {
       method: "PATCH",
@@ -208,6 +217,29 @@ export default function TurnosPanel() {
     return `${NOMBRES_MES_LARGO[m - 1]} ${y}`;
   }
 
+  // Desplegable de asistencia: se puede marcar/corregir en cualquier turno que no esté
+  // cancelado, sin pasar por los demás botones — pensado para marcarlo rápido desde el
+  // mostrador apenas se va el cliente.
+  function SelectAsistencia({ t, className = "" }: { t: TurnoConServicio; className?: string }) {
+    if (t.estado === "CANCELADO") return null;
+    const valor = t.estado === "COMPLETADO" || t.estado === "NO_ASISTIO" ? t.estado : "";
+    return (
+      <select
+        value={valor}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => cambiarEstado(t.id, e.target.value as "COMPLETADO" | "NO_ASISTIO")}
+        title="¿Asistió?"
+        className={`cursor-pointer rounded-md border-none py-0.5 font-medium outline-none ${className}`}
+      >
+        <option value="" disabled>
+          ¿Asistió?
+        </option>
+        <option value="COMPLETADO">✓ Asistió</option>
+        <option value="NO_ASISTIO">✕ No asistió</option>
+      </select>
+    );
+  }
+
   function TarjetaTurno({ t, compacta = false }: { t: TurnoConServicio; compacta?: boolean }) {
     if (compacta) {
       return (
@@ -216,7 +248,9 @@ export default function TurnosPanel() {
           className={`flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] leading-tight tabular-nums ${ESTADO_BADGE[t.estado]}`}
         >
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
-          <span className="font-medium">{t.horaInicio}</span> {t.mascotaNombre}
+          <span className="font-medium">{t.horaInicio}</span>
+          <span className="flex-1 truncate">{t.clienteNombre}</span>
+          <SelectAsistencia t={t} className="shrink-0 bg-transparent text-[10px]" />
         </div>
       );
     }
@@ -234,7 +268,8 @@ export default function TurnosPanel() {
               · {t.servicio.nombre}
             </p>
             <p className="text-sm text-humo-600">
-              {t.mascotaNombre} ({t.clienteNombre}, {t.clienteTelefono})
+              {t.clienteNombre} · {t.clienteTelefono}
+              {t.mascotaNombre && ` · ${t.mascotaNombre}`}
             </p>
             {t.notas && <p className="text-xs text-humo-400">Notas: {t.notas}</p>}
             <p className="mt-1 flex items-center gap-1 text-xs text-humo-400">
@@ -242,11 +277,13 @@ export default function TurnosPanel() {
               {ORIGEN_LABEL[t.origen]}
             </p>
           </div>
-          <span className={`rounded-full px-2 py-1 text-xs font-medium ${ESTADO_BADGE[t.estado]}`}>{t.estado}</span>
+          <span className={`rounded-full px-2 py-1 text-xs font-medium ${ESTADO_BADGE[t.estado]}`}>
+            {ESTADO_LABEL[t.estado]}
+          </span>
         </div>
 
-        {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
-          <div className="mt-2 flex flex-wrap gap-2">
+        {t.estado !== "CANCELADO" && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {t.estado === "PENDIENTE" && (
               <button
                 onClick={() => cambiarEstado(t.id, "CONFIRMADO")}
@@ -255,24 +292,23 @@ export default function TurnosPanel() {
                 Confirmar
               </button>
             )}
-            <button
-              onClick={() => abrirReprogramar(t)}
-              className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
-            >
-              Reprogramar
-            </button>
-            <button
-              onClick={() => cambiarEstado(t.id, "COMPLETADO")}
-              className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
-            >
-              Marcar completado
-            </button>
-            <button
-              onClick={() => cambiarEstado(t.id, "CANCELADO")}
-              className="btn-danger rounded-md px-3 py-1.5 text-xs font-medium"
-            >
-              Cancelar
-            </button>
+            {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
+              <button
+                onClick={() => abrirReprogramar(t)}
+                className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
+              >
+                Reprogramar
+              </button>
+            )}
+            <SelectAsistencia t={t} className="border border-humo-200 bg-white px-2 py-1.5 text-xs text-humo-700" />
+            {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
+              <button
+                onClick={() => cambiarEstado(t.id, "CANCELADO")}
+                className="btn-danger rounded-md px-3 py-1.5 text-xs font-medium"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         )}
 
@@ -459,7 +495,7 @@ export default function TurnosPanel() {
                         className={`flex items-center gap-1 truncate rounded px-1 text-[10px] tabular-nums ${ESTADO_BADGE[t.estado]}`}
                       >
                         <span className={`h-1 w-1 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
-                        {t.horaInicio} {t.mascotaNombre}
+                        {t.horaInicio} {t.clienteNombre}
                       </div>
                     ))}
                     {lista.length > 2 && <span className="px-1 text-[10px] text-humo-400">+{lista.length - 2} más</span>}

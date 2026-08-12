@@ -19,7 +19,6 @@ export default function NuevoTurnoModal({ fechaInicial, onClose, onCreated }: Pr
 
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteTelefono, setClienteTelefono] = useState("");
-  const [clienteEmail, setClienteEmail] = useState("");
   const [mascotaNombre, setMascotaNombre] = useState("");
   const [mascotaEspecie, setMascotaEspecie] = useState("");
   const [notas, setNotas] = useState("");
@@ -69,7 +68,6 @@ export default function NuevoTurnoModal({ fechaInicial, onClose, onCreated }: Pr
           horaInicio,
           clienteNombre,
           clienteTelefono,
-          clienteEmail: clienteEmail || undefined,
           mascotaNombre,
           mascotaEspecie: mascotaEspecie || undefined,
           notas: notas || undefined,
@@ -184,26 +182,15 @@ export default function NuevoTurnoModal({ fechaInicial, onClose, onCreated }: Pr
           />
         </label>
 
-        <div className="flex gap-2">
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span className="text-humo-600">Teléfono</span>
-            <input
-              required
-              value={clienteTelefono}
-              onChange={(e) => setClienteTelefono(e.target.value)}
-              className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
-            />
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span className="text-humo-600">Email (opcional)</span>
-            <input
-              type="email"
-              value={clienteEmail}
-              onChange={(e) => setClienteEmail(e.target.value)}
-              className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
-            />
-          </label>
-        </div>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-humo-600">Teléfono</span>
+          <input
+            required
+            value={clienteTelefono}
+            onChange={(e) => setClienteTelefono(e.target.value)}
+            className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
+          />
+        </label>
 
         <div className="flex gap-2">
           <label className="flex flex-1 flex-col gap-1 text-sm">

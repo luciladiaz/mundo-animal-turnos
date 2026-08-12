@@ -20,7 +20,8 @@ enum EstadoTurno {
   PENDIENTE // recién cargado, todavía sin confirmar con el cliente
   CONFIRMADO
   CANCELADO
-  COMPLETADO
+  COMPLETADO // asistió
+  NO_ASISTIO
 }
 
 enum OrigenTurno {

@@ -12,7 +12,7 @@ import {
   horaAMinutos,
 } from "@/lib/disponibilidad";
 import { tienePermiso } from "@/lib/autorizacion";
-import { enviarConfirmacionCliente, enviarNotificacionAdmin } from "@/lib/email";
+import { enviarNotificacionAdmin } from "@/lib/email";
 
 const crearTurnoSchema = z.object({
   servicioId: z.string().min(1),
@@ -20,7 +20,6 @@ const crearTurnoSchema = z.object({
   horaInicio: z.string().regex(/^\d{2}:\d{2}$/),
   clienteNombre: z.string().min(1),
   clienteTelefono: z.string().min(1),
-  clienteEmail: z.string().email().optional().or(z.literal("")),
   mascotaNombre: z.string().optional(),
   mascotaEspecie: z.string().optional(),
   notas: z.string().optional(),
@@ -86,8 +85,7 @@ export async function POST(req: NextRequest) {
           horaFin,
           clienteNombre: datos.clienteNombre,
           clienteTelefono: datos.clienteTelefono,
-          clienteEmail: datos.clienteEmail || null,
-          mascotaNombre: datos.mascotaNombre?.trim() || "Sin nombre",
+          mascotaNombre: datos.mascotaNombre?.trim() || "",
           mascotaEspecie: datos.mascotaEspecie || null,
           notas: datos.notas || null,
           origen,
@@ -95,23 +93,18 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    // Los emails van fuera de la transacción y nunca deben hacer fallar la reserva ya confirmada.
-    const configuracion = configuracionPrevia;
-    const datosEmail = {
-      clienteNombre: datos.clienteNombre,
-      clienteEmail: datos.clienteEmail || null,
-      mascotaNombre: datos.mascotaNombre?.trim() || "Sin nombre",
-      servicioNombre: servicio.nombre,
-      fecha: datos.fecha,
-      horaInicio: datos.horaInicio,
-      horaFin,
-      negocioNombre: configuracion?.nombre ?? "Mundo Animal",
-      negocioTelefono: configuracion?.telefono,
-      negocioDireccion: configuracion?.direccion,
-    };
-    await enviarConfirmacionCliente(datosEmail);
+    // El email va fuera de la transacción y nunca debe hacer fallar la reserva ya confirmada.
+    // Ya no se le manda nada al cliente (sin recordatorios por mail) — solo aviso interno al admin.
     const adminEmail = process.env.ADMIN_NOTIFICACION_EMAIL;
-    if (adminEmail) await enviarNotificacionAdmin(adminEmail, datosEmail);
+    if (adminEmail) {
+      await enviarNotificacionAdmin(adminEmail, {
+        clienteNombre: datos.clienteNombre,
+        mascotaNombre: datos.mascotaNombre?.trim() || "",
+        servicioNombre: servicio.nombre,
+        fecha: datos.fecha,
+        horaInicio: datos.horaInicio,
+      });
+    }
 
     return NextResponse.json({ turno }, { status: 201 });
   } catch (err) {

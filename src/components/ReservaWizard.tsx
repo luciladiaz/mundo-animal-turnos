@@ -16,7 +16,6 @@ interface Props {
 interface FormCliente {
   clienteNombre: string;
   clienteTelefono: string;
-  clienteEmail: string;
   mascotaNombre: string;
   mascotaEspecie: string;
   notas: string;
@@ -45,7 +44,6 @@ export default function ReservaWizard({ servicios, bloques, diasCerrados, fechaH
   const [form, setForm] = useState<FormCliente>({
     clienteNombre: "",
     clienteTelefono: "",
-    clienteEmail: "",
     mascotaNombre: "",
     mascotaEspecie: "",
     notas: "",
@@ -250,16 +248,9 @@ export default function ReservaWizard({ servicios, bloques, diasCerrados, fechaH
             required
           />
           <Campo
-            label="Email (opcional, para recordatorio)"
-            type="email"
-            value={form.clienteEmail}
-            onChange={(v) => setForm({ ...form, clienteEmail: v })}
-          />
-          <Campo
-            label="Nombre de tu mascota"
+            label="Nombre de tu mascota (opcional)"
             value={form.mascotaNombre}
             onChange={(v) => setForm({ ...form, mascotaNombre: v })}
-            required
           />
           <Campo
             label="Especie / raza (opcional)"
@@ -293,15 +284,11 @@ export default function ReservaWizard({ servicios, bloques, diasCerrados, fechaH
           </div>
           <h2 className="font-display text-xl font-semibold text-humo-900">¡Turno confirmado!</h2>
           <p className="text-sm text-humo-600">
-            {servicioSeleccionado?.nombre} para {form.mascotaNombre} el{" "}
+            {servicioSeleccionado?.nombre}
+            {form.mascotaNombre ? ` para ${form.mascotaNombre}` : ""} el{" "}
             {fechaSeleccionada && formatearFechaCorta(fechaSeleccionada)} a las{" "}
             <span className="tabular-nums">{horaSeleccionada}</span> hs.
           </p>
-          {form.clienteEmail && (
-            <p className="text-xs text-humo-400">
-              Te enviamos un email de confirmación a {form.clienteEmail}.
-            </p>
-          )}
           <p className="font-display text-xs text-humo-400">{negocioNombre}</p>
         </section>
       )}

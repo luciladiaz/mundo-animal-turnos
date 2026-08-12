@@ -121,7 +121,7 @@ export default async function DashboardPage() {
                   <span className={`h-2 w-2 shrink-0 rounded-full ${ESTADO_DOT[t.estado]}`} />
                   <div>
                     <p className="font-medium text-humo-900">
-                      {t.mascotaNombre} <span className="font-normal text-humo-500">· {t.servicio.nombre}</span>
+                      {t.clienteNombre} <span className="font-normal text-humo-500">· {t.servicio.nombre}</span>
                     </p>
                     <p className="text-sm text-humo-500">
                       {t.fecha === hoy ? "Hoy" : t.fecha}, <span className="tabular-nums">{t.horaInicio}</span>
