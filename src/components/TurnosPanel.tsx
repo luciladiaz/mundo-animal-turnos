@@ -331,16 +331,20 @@ export default function TurnosPanel() {
                 Reprogramar
               </button>
             )}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuAsistenciaId(menuAbierto ? null : t.id)}
-                className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
-              >
-                Asistencia
-              </button>
-              {menuAbierto && <MenuAsistencia t={t} onElegir={() => setMenuAsistenciaId(null)} />}
-            </div>
+            <button
+              type="button"
+              onClick={() => cambiarEstado(t.id, "COMPLETADO")}
+              className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
+            >
+              ✓ Asistió
+            </button>
+            <button
+              type="button"
+              onClick={() => cambiarEstado(t.id, "NO_ASISTIO")}
+              className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
+            >
+              ✕ No asistió
+            </button>
             {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
               <button
                 onClick={() => cambiarEstado(t.id, "CANCELADO")}
