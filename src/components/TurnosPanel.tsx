@@ -105,6 +105,14 @@ export default function TurnosPanel() {
   const [nuevaFecha, setNuevaFecha] = useState("");
   const [nuevaHora, setNuevaHora] = useState("");
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [menuAsistenciaId, setMenuAsistenciaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!menuAsistenciaId) return;
+    const cerrar = () => setMenuAsistenciaId(null);
+    document.addEventListener("click", cerrar);
+    return () => document.removeEventListener("click", cerrar);
+  }, [menuAsistenciaId]);
 
   const diasGrilla = useMemo(() => {
     if (vista === "dia") return [fechaRef];
@@ -217,40 +225,63 @@ export default function TurnosPanel() {
     return `${NOMBRES_MES_LARGO[m - 1]} ${y}`;
   }
 
-  // Desplegable de asistencia: se puede marcar/corregir en cualquier turno que no esté
-  // cancelado, sin pasar por los demás botones — pensado para marcarlo rápido desde el
-  // mostrador apenas se va el cliente.
-  function SelectAsistencia({ t, className = "" }: { t: TurnoConServicio; className?: string }) {
-    if (t.estado === "CANCELADO") return null;
-    const valor = t.estado === "COMPLETADO" || t.estado === "NO_ASISTIO" ? t.estado : "";
+  // Menú de asistencia: no se ve nada hasta que se toca el turno — ahí aparece un
+  // desplegable chiquito con las dos opciones. Se puede marcar/corregir en cualquier
+  // turno que no esté cancelado, pensado para hacerlo rápido desde el mostrador.
+  function MenuAsistencia({ t, onElegir }: { t: TurnoConServicio; onElegir: () => void }) {
     return (
-      <select
-        value={valor}
+      <div
         onClick={(e) => e.stopPropagation()}
-        onChange={(e) => cambiarEstado(t.id, e.target.value as "COMPLETADO" | "NO_ASISTIO")}
-        title="¿Asistió?"
-        className={`cursor-pointer rounded-md border-none py-0.5 font-medium outline-none ${className}`}
+        className="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-lg border border-humo-200 bg-white text-left shadow-lg"
       >
-        <option value="" disabled>
-          ¿Asistió?
-        </option>
-        <option value="COMPLETADO">✓ Asistió</option>
-        <option value="NO_ASISTIO">✕ No asistió</option>
-      </select>
+        <button
+          type="button"
+          onClick={() => {
+            cambiarEstado(t.id, "COMPLETADO");
+            onElegir();
+          }}
+          className="block w-full px-3 py-2 text-xs font-medium text-humo-700 hover:bg-exito-50 hover:text-exito-600"
+        >
+          ✓ Asistió
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            cambiarEstado(t.id, "NO_ASISTIO");
+            onElegir();
+          }}
+          className="block w-full px-3 py-2 text-xs font-medium text-humo-700 hover:bg-peligro-50 hover:text-peligro-600"
+        >
+          ✕ No asistió
+        </button>
+      </div>
     );
   }
 
   function TarjetaTurno({ t, compacta = false }: { t: TurnoConServicio; compacta?: boolean }) {
+    const menuAbierto = menuAsistenciaId === t.id;
+    const puedeMarcar = t.estado !== "CANCELADO";
+
     if (compacta) {
       return (
-        <div
-          title={ORIGEN_LABEL[t.origen]}
-          className={`flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] leading-tight tabular-nums ${ESTADO_BADGE[t.estado]}`}
-        >
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
-          <span className="font-medium">{t.horaInicio}</span>
-          <span className="flex-1 truncate">{t.clienteNombre}</span>
-          <SelectAsistencia t={t} className="shrink-0 bg-transparent text-[10px]" />
+        <div className="relative">
+          <div
+            title={puedeMarcar ? "Tocar para marcar asistencia" : ORIGEN_LABEL[t.origen]}
+            onClick={
+              puedeMarcar
+                ? (e) => {
+                    e.stopPropagation();
+                    setMenuAsistenciaId(menuAbierto ? null : t.id);
+                  }
+                : undefined
+            }
+            className={`flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] leading-tight tabular-nums ${ESTADO_BADGE[t.estado]} ${puedeMarcar ? "cursor-pointer" : ""}`}
+          >
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
+            <span className="font-medium">{t.horaInicio}</span>
+            <span className="flex-1 truncate">{t.clienteNombre}</span>
+          </div>
+          {menuAbierto && <MenuAsistencia t={t} onElegir={() => setMenuAsistenciaId(null)} />}
         </div>
       );
     }
@@ -300,7 +331,16 @@ export default function TurnosPanel() {
                 Reprogramar
               </button>
             )}
-            <SelectAsistencia t={t} className="border border-humo-200 bg-white px-2 py-1.5 text-xs text-humo-700" />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuAsistenciaId(menuAbierto ? null : t.id)}
+                className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
+              >
+                Asistencia
+              </button>
+              {menuAbierto && <MenuAsistencia t={t} onElegir={() => setMenuAsistenciaId(null)} />}
+            </div>
             {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
               <button
                 onClick={() => cambiarEstado(t.id, "CANCELADO")}
@@ -488,16 +528,30 @@ export default function TurnosPanel() {
                     {diaDelMes(fecha)}
                   </span>
                   <div className="flex flex-col gap-0.5">
-                    {lista.slice(0, 2).map((t) => (
-                      <div
-                        key={t.id}
-                        title={ORIGEN_LABEL[t.origen]}
-                        className={`flex items-center gap-1 truncate rounded px-1 text-[10px] tabular-nums ${ESTADO_BADGE[t.estado]}`}
-                      >
-                        <span className={`h-1 w-1 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
-                        {t.horaInicio} {t.clienteNombre}
-                      </div>
-                    ))}
+                    {lista.slice(0, 2).map((t) => {
+                      const menuAbierto = menuAsistenciaId === t.id;
+                      const puedeMarcar = t.estado !== "CANCELADO";
+                      return (
+                        <div key={t.id} className="relative">
+                          <div
+                            title={puedeMarcar ? "Tocar para marcar asistencia" : ORIGEN_LABEL[t.origen]}
+                            onClick={
+                              puedeMarcar
+                                ? (e) => {
+                                    e.stopPropagation();
+                                    setMenuAsistenciaId(menuAbierto ? null : t.id);
+                                  }
+                                : undefined
+                            }
+                            className={`flex items-center gap-1 truncate rounded px-1 text-[10px] tabular-nums ${ESTADO_BADGE[t.estado]} ${puedeMarcar ? "cursor-pointer" : ""}`}
+                          >
+                            <span className={`h-1 w-1 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
+                            {t.horaInicio} {t.clienteNombre}
+                          </div>
+                          {menuAbierto && <MenuAsistencia t={t} onElegir={() => setMenuAsistenciaId(null)} />}
+                        </div>
+                      );
+                    })}
                     {lista.length > 2 && <span className="px-1 text-[10px] text-humo-400">+{lista.length - 2} más</span>}
                   </div>
                 </button>
