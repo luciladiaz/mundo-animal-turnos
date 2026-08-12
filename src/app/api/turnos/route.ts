@@ -60,6 +60,11 @@ export async function POST(req: NextRequest) {
   const duracionTurnoMin = configuracionPrevia?.bufferMinutos ?? 10;
   const horaFin = calcularHoraFin(datos.horaInicio, duracionTurnoMin);
 
+  // Origen se decide acá por la sesión, no por un campo del body — así no puede
+  // falsearse desde el link público de reserva.
+  const sesionAdmin = await auth();
+  const origen = tienePermiso(sesionAdmin, "turnos") ? "MANUAL" : "CLIENTE";
+
   try {
     const turno = await prisma.$transaction(async (tx) => {
       // Re-chequeo de solapamiento DENTRO de la transacción, justo antes de crear,
@@ -85,6 +90,7 @@ export async function POST(req: NextRequest) {
           mascotaNombre: datos.mascotaNombre,
           mascotaEspecie: datos.mascotaEspecie || null,
           notas: datos.notas || null,
+          origen,
         },
       });
     });

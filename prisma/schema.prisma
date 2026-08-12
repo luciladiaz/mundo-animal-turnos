@@ -23,6 +23,11 @@ enum EstadoTurno {
   COMPLETADO
 }
 
+enum OrigenTurno {
+  MANUAL // cargado por el local desde el panel admin
+  CLIENTE // reservado por el cliente desde el link público
+}
+
 model Servicio {
   id          String   @id @default(cuid())
   nombre      String
@@ -74,6 +79,9 @@ model Turno {
   notas           String?
 
   estado    EstadoTurno @default(PENDIENTE)
+  // Se determina en el servidor a partir de la sesión (no viene del body), para que
+  // no pueda falsearse desde el link público — ver POST /api/turnos.
+  origen    OrigenTurno @default(CLIENTE)
   createdAt DateTime    @default(now())
 
   @@index([fecha])

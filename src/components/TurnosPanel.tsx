@@ -24,6 +24,22 @@ const ESTADO_BADGE: Record<string, string> = {
   COMPLETADO: "bg-celeste-50 text-celeste-600",
 };
 
+// Origen del turno — distinto de ESTADO_BADGE (que ya usa mora/celeste/exito/alerta
+// para el estado): acá usamos los dos colores de marca para que se lea de un vistazo
+// quién cargó el turno, sin pisar el significado de los badges de estado.
+const ORIGEN_LABEL: Record<string, string> = {
+  MANUAL: "Cargado en el local",
+  CLIENTE: "Reservado por el cliente",
+};
+const ORIGEN_BORDE: Record<string, string> = {
+  MANUAL: "border-l-mora-500",
+  CLIENTE: "border-l-celeste-500",
+};
+const ORIGEN_PUNTO: Record<string, string> = {
+  MANUAL: "bg-mora-500",
+  CLIENTE: "bg-celeste-500",
+};
+
 function diaDelMes(fecha: string): number {
   return Number(fecha.split("-")[2]);
 }
@@ -195,13 +211,20 @@ export default function TurnosPanel() {
   function TarjetaTurno({ t, compacta = false }: { t: TurnoConServicio; compacta?: boolean }) {
     if (compacta) {
       return (
-        <div className={`rounded-md px-1.5 py-1 text-[11px] leading-tight tabular-nums ${ESTADO_BADGE[t.estado]}`}>
+        <div
+          title={ORIGEN_LABEL[t.origen]}
+          className={`flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] leading-tight tabular-nums ${ESTADO_BADGE[t.estado]}`}
+        >
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
           <span className="font-medium">{t.horaInicio}</span> {t.mascotaNombre}
         </div>
       );
     }
     return (
-      <div className="card-suave rounded-xl border border-humo-100 bg-white p-3">
+      <div
+        title={ORIGEN_LABEL[t.origen]}
+        className={`card-suave rounded-xl border border-y-humo-100 border-r-humo-100 border-l-4 bg-white p-3 ${ORIGEN_BORDE[t.origen]}`}
+      >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <p className="font-medium text-humo-900">
@@ -214,6 +237,10 @@ export default function TurnosPanel() {
               {t.mascotaNombre} ({t.clienteNombre}, {t.clienteTelefono})
             </p>
             {t.notas && <p className="text-xs text-humo-400">Notas: {t.notas}</p>}
+            <p className="mt-1 flex items-center gap-1 text-xs text-humo-400">
+              <span className={`h-1.5 w-1.5 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
+              {ORIGEN_LABEL[t.origen]}
+            </p>
           </div>
           <span className={`rounded-full px-2 py-1 text-xs font-medium ${ESTADO_BADGE[t.estado]}`}>{t.estado}</span>
         </div>
@@ -337,6 +364,15 @@ export default function TurnosPanel() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3 text-xs text-humo-500">
+        <span className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${ORIGEN_PUNTO.MANUAL}`} /> {ORIGEN_LABEL.MANUAL}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${ORIGEN_PUNTO.CLIENTE}`} /> {ORIGEN_LABEL.CLIENTE}
+        </span>
+      </div>
+
       {cargando && <p className="text-sm text-humo-500">Cargando turnos...</p>}
 
       {!cargando && vista === "dia" && (
@@ -417,7 +453,12 @@ export default function TurnosPanel() {
                   </span>
                   <div className="flex flex-col gap-0.5">
                     {lista.slice(0, 2).map((t) => (
-                      <div key={t.id} className={`truncate rounded px-1 text-[10px] tabular-nums ${ESTADO_BADGE[t.estado]}`}>
+                      <div
+                        key={t.id}
+                        title={ORIGEN_LABEL[t.origen]}
+                        className={`flex items-center gap-1 truncate rounded px-1 text-[10px] tabular-nums ${ESTADO_BADGE[t.estado]}`}
+                      >
+                        <span className={`h-1 w-1 shrink-0 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
                         {t.horaInicio} {t.mascotaNombre}
                       </div>
                     ))}
