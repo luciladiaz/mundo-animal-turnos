@@ -101,9 +101,6 @@ export default function TurnosPanel() {
   const [turnos, setTurnos] = useState<TurnoConServicio[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reprogramando, setReprogramando] = useState<string | null>(null);
-  const [nuevaFecha, setNuevaFecha] = useState("");
-  const [nuevaHora, setNuevaHora] = useState("");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [menuAsistenciaId, setMenuAsistenciaId] = useState<string | null>(null);
 
@@ -181,29 +178,6 @@ export default function TurnosPanel() {
       setError(data.error ?? "No se pudo actualizar el turno");
       return;
     }
-    await cargarTurnos();
-  }
-
-  function abrirReprogramar(t: TurnoConServicio) {
-    setReprogramando(t.id);
-    setNuevaFecha(t.fecha);
-    setNuevaHora(t.horaInicio);
-    setError(null);
-  }
-
-  async function guardarReprogramacion(id: string) {
-    setError(null);
-    const res = await fetch(`/api/turnos/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fecha: nuevaFecha, horaInicio: nuevaHora }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error ?? "No se pudo reprogramar el turno");
-      return;
-    }
-    setReprogramando(null);
     await cargarTurnos();
   }
 
@@ -315,22 +289,6 @@ export default function TurnosPanel() {
 
         {t.estado !== "CANCELADO" && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {t.estado === "PENDIENTE" && (
-              <button
-                onClick={() => cambiarEstado(t.id, "CONFIRMADO")}
-                className="btn-primary rounded-md px-3 py-1.5 text-xs"
-              >
-                Confirmar
-              </button>
-            )}
-            {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
-              <button
-                onClick={() => abrirReprogramar(t)}
-                className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
-              >
-                Reprogramar
-              </button>
-            )}
             <button
               type="button"
               onClick={() => cambiarEstado(t.id, "COMPLETADO")}
@@ -344,49 +302,6 @@ export default function TurnosPanel() {
               className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
             >
               ✕ No asistió
-            </button>
-            {(t.estado === "PENDIENTE" || t.estado === "CONFIRMADO") && (
-              <button
-                onClick={() => cambiarEstado(t.id, "CANCELADO")}
-                className="btn-danger rounded-md px-3 py-1.5 text-xs font-medium"
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        )}
-
-        {reprogramando === t.id && (
-          <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-humo-50 p-3">
-            <label className="flex flex-col text-xs text-humo-500">
-              Fecha
-              <input
-                type="date"
-                value={nuevaFecha}
-                onChange={(e) => setNuevaFecha(e.target.value)}
-                className="rounded border border-humo-200 px-2 py-1 text-sm"
-              />
-            </label>
-            <label className="flex flex-col text-xs text-humo-500">
-              Hora
-              <input
-                type="time"
-                value={nuevaHora}
-                onChange={(e) => setNuevaHora(e.target.value)}
-                className="rounded border border-humo-200 px-2 py-1 text-sm"
-              />
-            </label>
-            <button
-              onClick={() => guardarReprogramacion(t.id)}
-              className="btn-primary rounded-md px-3 py-1.5 text-xs"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={() => setReprogramando(null)}
-              className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
-            >
-              Cancelar
             </button>
           </div>
         )}
