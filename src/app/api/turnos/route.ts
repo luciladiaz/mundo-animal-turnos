@@ -21,7 +21,7 @@ const crearTurnoSchema = z.object({
   clienteNombre: z.string().min(1),
   clienteTelefono: z.string().min(1),
   clienteEmail: z.string().email().optional().or(z.literal("")),
-  mascotaNombre: z.string().min(1),
+  mascotaNombre: z.string().optional(),
   mascotaEspecie: z.string().optional(),
   notas: z.string().optional(),
 });
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
           clienteNombre: datos.clienteNombre,
           clienteTelefono: datos.clienteTelefono,
           clienteEmail: datos.clienteEmail || null,
-          mascotaNombre: datos.mascotaNombre,
+          mascotaNombre: datos.mascotaNombre?.trim() || "Sin nombre",
           mascotaEspecie: datos.mascotaEspecie || null,
           notas: datos.notas || null,
           origen,
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     const datosEmail = {
       clienteNombre: datos.clienteNombre,
       clienteEmail: datos.clienteEmail || null,
-      mascotaNombre: datos.mascotaNombre,
+      mascotaNombre: datos.mascotaNombre?.trim() || "Sin nombre",
       servicioNombre: servicio.nombre,
       fecha: datos.fecha,
       horaInicio: datos.horaInicio,

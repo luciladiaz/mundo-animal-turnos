@@ -207,9 +207,8 @@ export default function NuevoTurnoModal({ fechaInicial, onClose, onCreated }: Pr
 
         <div className="flex gap-2">
           <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span className="text-humo-600">Nombre de la mascota</span>
+            <span className="text-humo-600">Nombre de la mascota (opcional)</span>
             <input
-              required
               value={mascotaNombre}
               onChange={(e) => setMascotaNombre(e.target.value)}
               className="rounded-lg border border-humo-200 px-3 py-2 outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
