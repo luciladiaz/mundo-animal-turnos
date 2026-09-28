@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { formatearFecha } from "@/lib/formatoFichas";
-import { getFechaHoyArgentina } from "@/lib/disponibilidad";
+import { getFechaHoyArgentina, sumarDias } from "@/lib/disponibilidad";
+import { fragmentoConCoincidencia, normalizar, rangosResaltado, terminosDeBusqueda } from "@/lib/busquedaHistoria";
 import EditorAplicacion, { APLICACION_VACIA, type AplicacionForm } from "@/components/EditorAplicacion";
 
 interface Adjunto {
@@ -183,6 +184,14 @@ export default function HistoriaClinica({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cambiosAbiertos, setCambiosAbiertos] = useState<Record<string, Cambio[]>>({});
+  // Buscador y vista compacta (para pacientes con muchos años de historia).
+  const [busqueda, setBusqueda] = useState("");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const [soloAdjuntos, setSoloAdjuntos] = useState(false);
+  const [soloVacunas, setSoloVacunas] = useState(false);
+  const [vistaCompacta, setVistaCompacta] = useState<boolean | null>(null); // null = automática
+  const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
 
   const cargar = useCallback(async () => {
     const res = await fetch(`/api/consultas?mascotaId=${mascotaId}`);
@@ -288,6 +297,59 @@ export default function HistoriaClinica({
     if (v < r[0]) return " ↓";
     if (v > r[1]) return " ↑";
     return "";
+  }
+
+  const terminos = terminosDeBusqueda(busqueda);
+  const hayFiltros = terminos.length > 0 || Boolean(desde) || Boolean(hasta) || soloAdjuntos || soloVacunas;
+  const filtradas = (consultas ?? []).filter((c) => {
+    if (desde && c.fecha < desde) return false;
+    if (hasta && c.fecha > hasta) return false;
+    if (soloAdjuntos && c.adjuntos.length === 0) return false;
+    if (soloVacunas && c.aplicaciones.length === 0) return false;
+    if (terminos.length === 0) return true;
+    const texto = normalizar(
+      [
+        c.motivo,
+        c.anamnesis,
+        c.mucosas,
+        c.hidratacion,
+        c.examen,
+        c.diagnostico,
+        c.tratamiento,
+        c.estudios,
+        c.autorNombre,
+        ...c.adjuntos.map((a) => a.nombre),
+        ...c.aplicaciones.map((a) => a.producto),
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    );
+    return terminos.every((t) => texto.includes(t));
+  });
+  // Con muchas consultas arranca compacta (una línea por consulta); se puede cambiar.
+  const compacta = vistaCompacta ?? (consultas?.length ?? 0) > 5;
+  const hoy = getFechaHoyArgentina();
+  const ATAJOS_FECHA = [
+    { texto: "Último mes", dias: 30 },
+    { texto: "6 meses", dias: 182 },
+    { texto: "1 año", dias: 365 },
+  ];
+
+  function limpiarFiltros() {
+    setBusqueda("");
+    setDesde("");
+    setHasta("");
+    setSoloAdjuntos(false);
+    setSoloVacunas(false);
+  }
+
+  function alternarAbierta(id: string) {
+    setAbiertas((a) => {
+      const nuevo = new Set(a);
+      if (nuevo.has(id)) nuevo.delete(id);
+      else nuevo.add(id);
+      return nuevo;
+    });
   }
 
   const formulario = (
@@ -465,22 +527,103 @@ export default function HistoriaClinica({
 
       {editando === "nueva" && formulario}
 
+      {consultas && consultas.length > 1 && editando === null && (
+        <div className="flex flex-col gap-2 rounded-xl border border-humo-100 bg-white p-3">
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar en la historia: otitis, meloxicam, ecografía..."
+            className="rounded-lg border border-humo-200 px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primario)] focus:ring-2 focus:ring-mora-100"
+          />
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-humo-500">Desde</span>
+            <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="rounded-md border border-humo-200 px-2 py-1" />
+            <span className="text-humo-500">hasta</span>
+            <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="rounded-md border border-humo-200 px-2 py-1" />
+            {ATAJOS_FECHA.map((a) => (
+              <button
+                key={a.dias}
+                type="button"
+                onClick={() => {
+                  setDesde(sumarDias(hoy, -a.dias));
+                  setHasta("");
+                }}
+                className={`rounded-full border px-2 py-0.5 ${
+                  desde === sumarDias(hoy, -a.dias) && !hasta
+                    ? "border-mora-300 bg-mora-50 text-mora-700"
+                    : "border-humo-200 text-humo-600 hover:border-mora-300"
+                }`}
+              >
+                {a.texto}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-humo-600">
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={soloAdjuntos} onChange={(e) => setSoloAdjuntos(e.target.checked)} />
+              Con archivos adjuntos
+            </label>
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={soloVacunas} onChange={(e) => setSoloVacunas(e.target.checked)} />
+              Con vacunas o desparasitaciones
+            </label>
+            <span className="ml-auto flex items-center gap-3">
+              {hayFiltros && (
+                <>
+                  <span className="text-humo-500">
+                    {filtradas.length === 1 ? "1 consulta" : `${filtradas.length} consultas`} de {consultas.length}
+                  </span>
+                  <button type="button" onClick={limpiarFiltros} className="font-medium text-[var(--color-primario)] hover:underline">
+                    Limpiar
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setVistaCompacta(!compacta);
+                  setAbiertas(new Set());
+                }}
+                className="font-medium text-humo-600 hover:text-humo-900"
+              >
+                {compacta ? "Ver todo desplegado" : "Vista compacta"}
+              </button>
+            </span>
+          </div>
+        </div>
+      )}
+
       {consultas === null ? (
         <p className="text-sm text-humo-500">Cargando historia clínica...</p>
       ) : consultas.length === 0 && editando !== "nueva" ? (
         <p className="text-sm text-humo-500">Todavía no hay consultas cargadas. Tocá &quot;+ Nueva consulta&quot; para empezar.</p>
+      ) : filtradas.length === 0 && hayFiltros ? (
+        <p className="text-sm text-humo-500">Ninguna consulta coincide con la búsqueda.</p>
       ) : (
-        <ol className="flex flex-col gap-3">
-          {consultas.map((c) =>
+        <ol className={`flex flex-col ${compacta ? "gap-1.5" : "gap-3"}`}>
+          {filtradas.map((c) =>
             editando === c.id ? (
               <li key={c.id}>{formulario}</li>
+            ) : compacta && !abiertas.has(c.id) ? (
+              <li key={c.id}>
+                <FilaCompacta consulta={c} terminos={terminos} onAbrir={() => alternarAbierta(c.id)} />
+              </li>
             ) : (
               <li key={c.id} className="card-suave flex flex-col gap-2 rounded-xl border border-humo-100 bg-white p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-medium text-humo-900">
-                    <span className="tabular-nums">{formatearFecha(c.fecha)}</span> · {c.motivo}
+                    <span className="tabular-nums">{formatearFecha(c.fecha)}</span> ·{" "}
+                    <Resaltar texto={c.motivo} terminos={terminos} />
                   </p>
-                  <p className="text-xs text-humo-400">{c.autorNombre}</p>
+                  <span className="flex items-center gap-3 text-xs text-humo-400">
+                    {c.autorNombre}
+                    {compacta && (
+                      <button type="button" onClick={() => alternarAbierta(c.id)} className="font-medium text-humo-600 hover:text-humo-900">
+                        ▲ Cerrar
+                      </button>
+                    )}
+                  </span>
                 </div>
 
                 {(c.pesoKg != null || c.temperatura != null || c.frecuenciaCardiaca != null || c.frecuenciaRespiratoria != null || c.condicionCorporal != null) && (
@@ -509,16 +652,17 @@ export default function HistoriaClinica({
                 )}
 
                 <dl className="flex flex-col gap-1.5 text-sm">
-                  <Bloque etiqueta="Lo que cuenta el tutor" valor={c.anamnesis} />
+                  <Bloque etiqueta="Lo que cuenta el tutor" valor={c.anamnesis} terminos={terminos} />
                   <Bloque
                     etiqueta="Examen"
                     valor={[c.mucosas && `Mucosas: ${c.mucosas}`, c.hidratacion && `Hidratación: ${c.hidratacion}`, c.examen]
                       .filter(Boolean)
                       .join("\n") || null}
+                    terminos={terminos}
                   />
-                  <Bloque etiqueta="Diagnóstico" valor={c.diagnostico} destacado />
-                  <Bloque etiqueta="Tratamiento e indicaciones" valor={c.tratamiento} destacado />
-                  <Bloque etiqueta="Estudios" valor={c.estudios} />
+                  <Bloque etiqueta="Diagnóstico" valor={c.diagnostico} destacado terminos={terminos} />
+                  <Bloque etiqueta="Tratamiento e indicaciones" valor={c.tratamiento} destacado terminos={terminos} />
+                  <Bloque etiqueta="Estudios" valor={c.estudios} terminos={terminos} />
                   <Bloque etiqueta="Próximo control" valor={c.proximoControl ? formatearFecha(c.proximoControl) : null} />
                 </dl>
 
@@ -620,12 +764,87 @@ function Chip({ children, alerta = false }: { children: React.ReactNode; alerta?
   );
 }
 
-function Bloque({ etiqueta, valor, destacado = false }: { etiqueta: string; valor: string | null; destacado?: boolean }) {
+function Bloque({
+  etiqueta,
+  valor,
+  destacado = false,
+  terminos = [],
+}: {
+  etiqueta: string;
+  valor: string | null;
+  destacado?: boolean;
+  terminos?: string[];
+}) {
   if (!valor) return null;
   return (
     <div>
       <dt className="text-xs text-humo-400">{etiqueta}</dt>
-      <dd className={`whitespace-pre-line ${destacado ? "text-humo-900" : "text-humo-700"}`}>{valor}</dd>
+      <dd className={`whitespace-pre-line ${destacado ? "text-humo-900" : "text-humo-700"}`}>
+        <Resaltar texto={valor} terminos={terminos} />
+      </dd>
     </div>
+  );
+}
+
+/** Marca en amarillo las palabras buscadas. */
+function Resaltar({ texto, terminos }: { texto: string; terminos: string[] }) {
+  const rangos = rangosResaltado(texto, terminos);
+  if (rangos.length === 0) return <>{texto}</>;
+  const partes: React.ReactNode[] = [];
+  let pos = 0;
+  rangos.forEach(([ini, fin], i) => {
+    if (ini > pos) partes.push(texto.slice(pos, ini));
+    partes.push(
+      <mark key={i} className="rounded bg-alerta-50 px-0.5 text-humo-900 ring-1 ring-alerta-500/30">
+        {texto.slice(ini, fin)}
+      </mark>
+    );
+    pos = fin;
+  });
+  if (pos < texto.length) partes.push(texto.slice(pos));
+  return <>{partes}</>;
+}
+
+/** Una consulta en una línea: fecha · motivo · diagnóstico, y el fragmento donde aparece lo buscado. */
+function FilaCompacta({ consulta: c, terminos, onAbrir }: { consulta: Consulta; terminos: string[]; onAbrir: () => void }) {
+  const fragmento = fragmentoConCoincidencia(
+    [
+      { etiqueta: "Lo que cuenta el tutor", texto: c.anamnesis },
+      { etiqueta: "Examen", texto: c.examen },
+      { etiqueta: "Tratamiento", texto: c.tratamiento },
+      { etiqueta: "Estudios", texto: c.estudios },
+    ],
+    terminos
+  );
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      className="flex w-full flex-col gap-0.5 rounded-lg border border-humo-100 bg-white px-3 py-2 text-left text-sm transition hover:border-mora-200"
+    >
+      <span className="flex w-full items-baseline gap-2">
+        <span className="shrink-0 tabular-nums text-humo-500">{formatearFecha(c.fecha)}</span>
+        <span className="min-w-0 flex-1 truncate text-humo-900">
+          <span className="font-medium">
+            <Resaltar texto={c.motivo} terminos={terminos} />
+          </span>
+          {c.diagnostico && (
+            <span className="text-humo-500">
+              {" · "}
+              <Resaltar texto={c.diagnostico.replace(/\s+/g, " ")} terminos={terminos} />
+            </span>
+          )}
+        </span>
+        <span className="shrink-0 text-xs">
+          {c.aplicaciones.length > 0 && "💉"}
+          {c.adjuntos.length > 0 && " 📎"}
+        </span>
+      </span>
+      {fragmento && (
+        <span className="truncate text-xs text-humo-500">
+          {fragmento.etiqueta}: <Resaltar texto={fragmento.texto} terminos={terminos} />
+        </span>
+      )}
+    </button>
   );
 }
