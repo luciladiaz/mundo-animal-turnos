@@ -12,8 +12,8 @@ const actualizarSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida")
     .nullable()
     .optional(),
-  // Veterinario o secretaria: "ya le mandé el recordatorio" / "no recordar más".
-  recordatorioEnviado: z.literal(true).optional(),
+  // Veterinario o secretaria: "ya le envié el mensaje" (true) / "desmarcar" (false) / "no recordar más".
+  recordatorioEnviado: z.boolean().optional(),
   resuelta: z.boolean().optional(),
 });
 
@@ -45,7 +45,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     data: {
       ...(proximaFecha !== undefined ? { proximaFecha, recordatorioEnviado: null, recordatorioEnviadoPor: null } : {}),
       ...(resuelta !== undefined ? { resuelta } : {}),
-      ...(recordatorioEnviado ? { recordatorioEnviado: new Date(), recordatorioEnviadoPor: nombreUsuario(session) } : {}),
+      ...(recordatorioEnviado === true ? { recordatorioEnviado: new Date(), recordatorioEnviadoPor: nombreUsuario(session) } : {}),
+      ...(recordatorioEnviado === false ? { recordatorioEnviado: null, recordatorioEnviadoPor: null } : {}),
     },
   });
   return NextResponse.json({ aplicacion });

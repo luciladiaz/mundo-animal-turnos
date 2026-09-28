@@ -22,16 +22,20 @@ function primerNombre(nombre: string): string {
   return nombre.trim().split(/\s+/)[0] ?? nombre;
 }
 
+// Frases neutras ("cuidar su salud", "se le pasó") porque no siempre está cargado el sexo.
 function mensaje(p: Pendiente, negocio: string, hoy: string): string {
-  const cuando =
+  const fecha = formatearFecha(p.proximaFecha);
+  const cuerpo =
     p.proximaFecha < hoy
-      ? `le tocaba la ${p.producto} el ${formatearFecha(p.proximaFecha)} y todavía no la tiene registrada`
-      : `le toca la ${p.producto} el ${formatearFecha(p.proximaFecha)}`;
+      ? `A ${p.mascota.nombre} se le pasó la fecha de la ${p.producto} (era el ${fecha}). ` +
+        `Te recomendamos aplicarla cuanto antes para que no quede sin protección.`
+      : `A ${p.mascota.nombre} le toca la ${p.producto} el ${fecha}. ` +
+        `Tener sus vacunas al día es la mejor forma de cuidar su salud.`;
   return (
     `¡Hola, ${primerNombre(p.mascota.tutor.nombre)}! Te escribimos de ${negocio} 🐾\n` +
-    `Te recordamos que a ${p.mascota.nombre} ${cuando}.\n` +
-    `Podés sacar turno acá: ${SITIO_PUBLICO}\n` +
-    `Si ya se la aplicaron en otro lado, avisanos así actualizamos su carnet. ¡Gracias!`
+    `${cuerpo}\n` +
+    `Reservá tu turno acá: ${SITIO_PUBLICO}\n` +
+    `¡Te esperamos!`
   );
 }
 
@@ -51,7 +55,7 @@ export default function RecordatoriosPanel({ puedeVerFichas }: { puedeVerFichas:
     cargar();
   }, [cargar]);
 
-  async function actualizar(id: string, datos: { recordatorioEnviado?: true; resuelta?: boolean }) {
+  async function actualizar(id: string, datos: { recordatorioEnviado?: boolean; resuelta?: boolean }) {
     await fetch(`/api/aplicaciones/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -97,9 +101,17 @@ export default function RecordatoriosPanel({ puedeVerFichas }: { puedeVerFichas:
                         <strong>{p.producto}</strong> · <span className="tabular-nums">{formatearFecha(p.proximaFecha)}</span>
                       </p>
                       {p.recordatorioEnviado && (
-                        <span className="rounded-full bg-exito-50 px-2 py-0.5 text-xs text-exito-600">
-                          ✓ Avisado el {new Date(p.recordatorioEnviado).toLocaleDateString("es-AR")}
-                          {p.recordatorioEnviadoPor && ` por ${p.recordatorioEnviadoPor}`}
+                        <span className="flex items-center gap-2">
+                          <span className="rounded-full bg-exito-50 px-2 py-0.5 text-xs text-exito-600">
+                            ✓ Avisado el {new Date(p.recordatorioEnviado).toLocaleDateString("es-AR")}
+                            {p.recordatorioEnviadoPor && ` por ${p.recordatorioEnviadoPor}`}
+                          </span>
+                          <button
+                            onClick={() => actualizar(p.id, { recordatorioEnviado: false })}
+                            className="text-xs text-humo-400 hover:text-humo-700"
+                          >
+                            Desmarcar
+                          </button>
                         </span>
                       )}
                     </div>
@@ -122,13 +134,21 @@ export default function RecordatoriosPanel({ puedeVerFichas }: { puedeVerFichas:
                           href={whatsapp}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={() => actualizar(p.id, { recordatorioEnviado: true })}
-                          className="btn-primary rounded-md px-3 py-1.5 text-xs"
+                          className={`${p.recordatorioEnviado ? "btn-secondary font-medium" : "btn-primary"} rounded-md px-3 py-1.5 text-xs`}
                         >
                           {p.recordatorioEnviado ? "Volver a avisar por WhatsApp" : "Avisar por WhatsApp"}
                         </a>
                       ) : (
                         <span className="text-xs text-alerta-600">El teléfono no parece un celular: revisalo en la ficha.</span>
+                      )}
+                      {/* Abrir WhatsApp no garantiza que se haya mandado: se marca a mano. */}
+                      {!p.recordatorioEnviado && (
+                        <button
+                          onClick={() => actualizar(p.id, { recordatorioEnviado: true })}
+                          className="btn-secondary rounded-md px-3 py-1.5 text-xs font-medium"
+                        >
+                          ✓ Ya le envié el mensaje
+                        </button>
                       )}
                       <button
                         onClick={() => {
