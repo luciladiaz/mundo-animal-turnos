@@ -85,8 +85,65 @@ model Turno {
   origen    OrigenTurno @default(CLIENTE)
   createdAt DateTime    @default(now())
 
+  // Vínculo con las fichas. Los campos cliente*/mascota* de arriba se conservan tal
+  // cual se cargaron (historial fiel); estas relaciones se completan solas al crear
+  // el turno, buscando al tutor por teléfono — ver src/lib/fichas.ts.
+  tutor     Tutor?   @relation(fields: [tutorId], references: [id], onDelete: SetNull)
+  tutorId   String?
+  mascota   Mascota? @relation(fields: [mascotaId], references: [id], onDelete: SetNull)
+  mascotaId String?
+
   @@index([fecha])
   @@index([servicioId, fecha])
+  @@index([tutorId])
+  @@index([mascotaId])
+}
+
+// Ficha del dueño/responsable. Se identifica por teléfono: telefonoClave son los
+// últimos 10 dígitos (sin espacios, guiones ni prefijos), así "299 4123456",
+// "+54 9 2994123456" y "2994123456" caen en la misma ficha.
+model Tutor {
+  id                       String    @id @default(cuid())
+  nombre                   String
+  telefono                 String
+  telefonoClave            String    @unique
+  email                    String?
+  dni                      String?
+  direccion                String?
+  notas                    String?
+  // Ley 25.326: consentimiento para recibir recordatorios por WhatsApp, con fecha.
+  aceptaRecordatorios      Boolean   @default(false)
+  aceptaRecordatoriosFecha DateTime?
+  mascotas                 Mascota[]
+  turnos                   Turno[]
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+}
+
+model Mascota {
+  id              String   @id @default(cuid())
+  tutor           Tutor    @relation(fields: [tutorId], references: [id])
+  tutorId         String
+  nombre          String
+  nombreClave     String // nombre en minúsculas y sin espacios de más, para reconocerla al reservar
+  especie         String? // "Perro" | "Gato" | otro texto libre
+  raza            String?
+  sexo            String? // "Macho" | "Hembra"
+  castrado        Boolean?
+  fechaNacimiento String? // "2021-03-15", mismo criterio que las fechas de Turno
+  color           String?
+  microchip       String?
+  pesoKg          Float?
+  fotoUrl         String?
+  // Avisos que se muestran destacados al abrir la ficha (alergias, "muerde", etc.).
+  alertas         String?
+  notas           String?
+  fallecida       Boolean  @default(false)
+  turnos          Turno[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tutorId, nombreClave])
 }
 
 // Fechas puntuales sin atención (feriados, cierres especiales) — distinto del

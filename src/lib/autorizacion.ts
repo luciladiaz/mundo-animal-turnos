@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
 
-export type Pestaña = "turnos" | "servicios" | "configuracion";
+export type Pestaña = "turnos" | "clientes" | "servicios" | "configuracion";
 
 type SessionUser = { esAdmin?: boolean; permisos?: string[] } | undefined;
 
@@ -10,7 +10,7 @@ export function esAdmin(session: Session | null): boolean {
 }
 
 /**
- * Acceso a una pestaña puntual (Turnos/Servicios/Configuración): esAdmin siempre tiene
+ * Acceso a una pestaña puntual (Turnos/Clientes/Servicios/Configuración): esAdmin siempre tiene
  * acceso a todo; el resto depende de los permisos elegidos para ese usuario.
  * Dashboard no pasa por acá — queda siempre visible para cualquier usuario activo.
  */

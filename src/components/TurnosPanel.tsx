@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { Turno, Servicio } from "@prisma/client";
 import { getDiaSemana, getFechaHoyArgentina, sumarDias } from "@/lib/disponibilidad";
 import NuevoTurnoModal from "@/components/NuevoTurnoModal";
+import { ESTADO_BADGE, ESTADO_LABEL } from "@/lib/estadosTurno";
 
 type TurnoConServicio = Turno & { servicio: Servicio };
 type Vista = "dia" | "semana" | "mes";
@@ -14,24 +16,6 @@ const NOMBRES_MES_LARGO = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
-
-// Colores semánticos de estado — independientes del acento de marca, así el estado
-// de un turno se lee igual sin importar qué colores tenga cada cliente de Solvit Studio.
-const ESTADO_BADGE: Record<string, string> = {
-  PENDIENTE: "bg-alerta-50 text-alerta-600",
-  CONFIRMADO: "bg-exito-50 text-exito-600",
-  CANCELADO: "bg-humo-100 text-humo-400 line-through",
-  COMPLETADO: "bg-celeste-50 text-celeste-600",
-  NO_ASISTIO: "bg-peligro-50 text-peligro-600",
-};
-
-const ESTADO_LABEL: Record<string, string> = {
-  PENDIENTE: "Pendiente",
-  CONFIRMADO: "Confirmado",
-  CANCELADO: "Cancelado",
-  COMPLETADO: "Asistió",
-  NO_ASISTIO: "No asistió",
-};
 
 // Origen del turno — distinto de ESTADO_BADGE (que ya usa mora/celeste/exito/alerta
 // para el estado): acá usamos los dos colores de marca para que se lea de un vistazo
@@ -94,7 +78,7 @@ function rangoFechas(desde: string, hasta: string): string[] {
   return fechas;
 }
 
-export default function TurnosPanel() {
+export default function TurnosPanel({ puedeVerFichas = false }: { puedeVerFichas?: boolean }) {
   const hoy = useMemo(() => getFechaHoyArgentina(), []);
   const [vista, setVista] = useState<Vista>("semana");
   const [fechaRef, setFechaRef] = useState(hoy);
@@ -277,6 +261,14 @@ export default function TurnosPanel() {
               {t.mascotaNombre && ` · ${t.mascotaNombre}`}
             </p>
             {t.notas && <p className="text-xs text-humo-400">Notas: {t.notas}</p>}
+            {puedeVerFichas && (t.mascotaId || t.tutorId) && (
+              <Link
+                href={t.mascotaId ? `/admin/mascotas/${t.mascotaId}` : `/admin/clientes/${t.tutorId}`}
+                className="mt-1 inline-block text-xs font-medium text-[var(--color-primario)] hover:underline"
+              >
+                Ver ficha →
+              </Link>
+            )}
             <p className="mt-1 flex items-center gap-1 text-xs text-humo-400">
               <span className={`h-1.5 w-1.5 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />
               {ORIGEN_LABEL[t.origen]}

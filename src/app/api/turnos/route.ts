@@ -13,6 +13,7 @@ import {
 } from "@/lib/disponibilidad";
 import { tienePermiso } from "@/lib/autorizacion";
 import { enviarNotificacionAdmin } from "@/lib/email";
+import { vincularFichas } from "@/lib/fichas";
 
 const crearTurnoSchema = z.object({
   servicioId: z.string().min(1),
@@ -77,8 +78,12 @@ export async function POST(req: NextRequest) {
         throw new SlotNoDisponibleError();
       }
 
+      const { tutorId, mascotaId } = await vincularFichas(tx, datos);
+
       return tx.turno.create({
         data: {
+          tutorId,
+          mascotaId,
           servicioId: datos.servicioId,
           fecha: datos.fecha,
           horaInicio: datos.horaInicio,
