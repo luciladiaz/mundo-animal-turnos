@@ -122,8 +122,8 @@ model Tutor {
 }
 
 model Mascota {
-  id              String     @id @default(cuid())
-  tutor           Tutor      @relation(fields: [tutorId], references: [id])
+  id              String       @id @default(cuid())
+  tutor           Tutor        @relation(fields: [tutorId], references: [id])
   tutorId         String
   nombre          String
   nombreClave     String // nombre en minúsculas y sin espacios de más, para reconocerla al reservar
@@ -139,11 +139,12 @@ model Mascota {
   // Avisos que se muestran destacados al abrir la ficha (alergias, "muerde", etc.).
   alertas         String?
   notas           String?
-  fallecida       Boolean    @default(false)
+  fallecida       Boolean      @default(false)
   turnos          Turno[]
   consultas       Consulta[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  aplicaciones    Aplicacion[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([tutorId, nombreClave])
 }
@@ -202,11 +203,12 @@ model Consulta {
   estudios       String? // estudios pedidos o resultados
   proximoControl String? // "2026-10-05"
 
-  autorNombre String // quién la cargó (nombre del usuario en ese momento)
-  adjuntos    AdjuntoConsulta[]
-  cambios     ConsultaCambio[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  autorNombre  String // quién la cargó (nombre del usuario en ese momento)
+  adjuntos     AdjuntoConsulta[]
+  aplicaciones Aplicacion[]
+  cambios      ConsultaCambio[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([mascotaId, fecha])
 }
@@ -237,4 +239,40 @@ model ConsultaCambio {
   createdAt       DateTime @default(now())
 
   @@index([consultaId])
+}
+
+enum TipoAplicacion {
+  VACUNA
+  DESPARASITACION_INTERNA
+  DESPARASITACION_EXTERNA
+}
+
+// Vacunas y desparasitaciones aplicadas (el "carnet"). proximaFecha es lo que alimenta
+// la pestaña Recordatorios: se calcula sola según el producto y el veterinario la puede
+// cambiar. Cuando se aplica una dosis nueva del mismo producto, la anterior queda
+// "resuelta" y deja de aparecer en los recordatorios.
+model Aplicacion {
+  id            String         @id @default(cuid())
+  mascota       Mascota        @relation(fields: [mascotaId], references: [id])
+  mascotaId     String
+  consulta      Consulta?      @relation(fields: [consultaId], references: [id], onDelete: SetNull)
+  consultaId    String?
+  tipo          TipoAplicacion
+  producto      String // "Antirrábica", "Séxtuple", "Pipeta"...
+  productoClave String // producto en minúsculas, para reconocer la dosis siguiente
+  lote          String?
+  fecha         String // "2026-09-28"
+  proximaFecha  String? // null = no hay que repetirla
+  notas         String?
+  aplicadoPor   String
+
+  resuelta               Boolean   @default(false)
+  recordatorioEnviado    DateTime?
+  recordatorioEnviadoPor String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mascotaId, productoClave])
+  @@index([resuelta, proximaFecha])
 }

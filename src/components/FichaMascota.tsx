@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HistorialTurnos, { type TurnoHistorial } from "@/components/HistorialTurnos";
 import HistoriaClinica from "@/components/HistoriaClinica";
+import PlanSanitario from "@/components/PlanSanitario";
 import { calcularEdad, formatearFecha } from "@/lib/formatoFichas";
 import { getFechaHoyArgentina } from "@/lib/disponibilidad";
 
@@ -75,6 +76,7 @@ export default function FichaMascota({
   const [noEncontrada, setNoEncontrada] = useState(false);
   const [form, setForm] = useState<FormMascota | null>(null);
   const [unirCon, setUnirCon] = useState<string | null>(null);
+  const [versionVacunas, setVersionVacunas] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -287,12 +289,17 @@ export default function FichaMascota({
         </form>
       )}
 
+      <PlanSanitario mascotaId={mascota.id} puedeRegistrar={puedeVerHistoria} recargar={versionVacunas} />
+
       {puedeVerHistoria && (
         <HistoriaClinica
           mascotaId={mascota.id}
           especie={mascota.especie}
           turnoInicial={turnoOrigen ? { id: turnoOrigen.id, fecha: turnoOrigen.fecha, motivo: turnoOrigen.servicio.nombre } : null}
-          onGuardado={cargar}
+          onGuardado={() => {
+            cargar();
+            setVersionVacunas((v) => v + 1);
+          }}
         />
       )}
 

@@ -23,10 +23,10 @@ const CAMPOS_RESEÑA = [
 
 /**
  * POST: une esta mascota (duplicada, ej. "Flopy") con otra del mismo tutor ("Floppy").
- * Los turnos y las consultas pasan a la ficha destino, los datos que allá faltaban se
+ * Los turnos, las consultas y las vacunas pasan a la ficha destino, los datos que allá faltaban se
  * completan con los de esta, y esta ficha se elimina. Turnos y consultas no se modifican
  * salvo su vínculo.
- * OJO: cualquier tabla nueva que cuelgue de Mascota (ej. vacunas) tiene que moverse
+ * OJO: cualquier tabla nueva que cuelgue de Mascota tiene que moverse
  * también en esta transacción, o la base rechaza el borrado de la ficha duplicada.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await prisma.$transaction([
     prisma.turno.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.consulta.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
+    prisma.aplicacion.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.mascota.update({ where: { id: destino.id }, data: completar }),
     prisma.mascota.delete({ where: { id } }),
   ]);

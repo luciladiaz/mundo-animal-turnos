@@ -1,5 +1,8 @@
 import { claveTelefono } from "@/lib/fichas";
 
+/** Página pública de reservas (para el link en los recordatorios). */
+export const SITIO_PUBLICO = "https://vetmundoanimal.com.ar";
+
 /** "2026-07-15" → "15/07/2026" */
 export function formatearFecha(fecha: string): string {
   const [y, m, d] = fecha.split("-");

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatearFecha } from "@/lib/formatoFichas";
 import { getFechaHoyArgentina } from "@/lib/disponibilidad";
+import EditorAplicacion, { APLICACION_VACIA, type AplicacionForm } from "@/components/EditorAplicacion";
 
 interface Adjunto {
   id: string;
@@ -30,10 +31,11 @@ interface Consulta {
   proximoControl: string | null;
   autorNombre: string;
   adjuntos: Adjunto[];
+  aplicaciones: { id: string; producto: string; lote: string | null; proximaFecha: string | null }[];
   _count: { cambios: number };
 }
 
-type CampoConsulta = Exclude<keyof Consulta, "id" | "autorNombre" | "adjuntos" | "_count">;
+type CampoConsulta = Exclude<keyof Consulta, "id" | "autorNombre" | "adjuntos" | "aplicaciones" | "_count">;
 
 interface Cambio {
   id: string;
@@ -177,6 +179,7 @@ export default function HistoriaClinica({
   );
   const [turnoId, setTurnoId] = useState<string | null>(turnoInicial?.id ?? null);
   const [archivos, setArchivos] = useState<File[]>([]);
+  const [aplicaciones, setAplicaciones] = useState<AplicacionForm[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cambiosAbiertos, setCambiosAbiertos] = useState<Record<string, Cambio[]>>({});
@@ -196,6 +199,7 @@ export default function HistoriaClinica({
     setForm(formVacio(getFechaHoyArgentina()));
     setTurnoId(null);
     setArchivos([]);
+    setAplicaciones([]);
     setError(null);
     setEditando("nueva");
   }
@@ -231,7 +235,7 @@ export default function HistoriaClinica({
     const res = await fetch(esNueva ? "/api/consultas" : `/api/consultas/${editando}`, {
       method: esNueva ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(esNueva ? { ...payload, mascotaId, turnoId } : payload),
+      body: JSON.stringify(esNueva ? { ...payload, mascotaId, turnoId, aplicaciones } : payload),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -256,6 +260,7 @@ export default function HistoriaClinica({
     setGuardando(false);
     setEditando(null);
     setArchivos([]);
+    setAplicaciones([]);
     setTurnoId(null);
     if (fallidos.length) setError(`La consulta se guardó, pero no se pudieron adjuntar: ${fallidos.join(" · ")}`);
     await cargar();
@@ -381,6 +386,28 @@ export default function HistoriaClinica({
           className={INPUT}
         />
       </Campo>
+      {editando === "nueva" && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-humo-600">Vacunas y desparasitaciones aplicadas en esta consulta</p>
+          {aplicaciones.map((a, i) => (
+            <EditorAplicacion
+              key={i}
+              valor={a}
+              fechaBase={form.fecha}
+              onChange={(v) => setAplicaciones((lista) => lista.map((x, j) => (j === i ? v : x)))}
+              onQuitar={() => setAplicaciones((lista) => lista.filter((_, j) => j !== i))}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() => setAplicaciones((lista) => [...lista, APLICACION_VACIA])}
+            className="btn-secondary w-fit rounded-md px-3 py-1.5 text-xs font-medium"
+          >
+            + Agregar vacuna o desparasitación
+          </button>
+        </div>
+      )}
+
       <Campo etiqueta="Estudios (pedidos o resultados)">
         <textarea rows={2} value={form.estudios} onChange={(e) => set("estudios", e.target.value)} className={INPUT} />
       </Campo>
@@ -494,6 +521,18 @@ export default function HistoriaClinica({
                   <Bloque etiqueta="Estudios" valor={c.estudios} />
                   <Bloque etiqueta="Próximo control" valor={c.proximoControl ? formatearFecha(c.proximoControl) : null} />
                 </dl>
+
+                {c.aplicaciones.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 text-xs">
+                    {c.aplicaciones.map((a) => (
+                      <span key={a.id} className="rounded-full bg-exito-50 px-2 py-0.5 text-exito-600">
+                        💉 {a.producto}
+                        {a.lote && ` (lote ${a.lote})`}
+                        {a.proximaFecha && ` · próxima ${formatearFecha(a.proximaFecha)}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {c.adjuntos.length > 0 && (
                   <div className="flex flex-wrap gap-2">

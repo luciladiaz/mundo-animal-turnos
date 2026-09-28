@@ -15,6 +15,7 @@ const PESTAÑAS: { key: string; label: string }[] = [
   { key: "turnos", label: "Turnos" },
   { key: "clientes", label: "Clientes" },
   { key: "historia", label: "Historia clínica (veterinario)" },
+  { key: "recordatorios", label: "Recordatorios de vacunas" },
   { key: "servicios", label: "Servicios" },
   { key: "configuracion", label: "Configuración" },
 ];
