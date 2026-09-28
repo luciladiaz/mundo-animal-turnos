@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { esAdmin } from "@/lib/autorizacion";
 
-const PESTAÑAS = ["turnos", "clientes", "servicios", "configuracion"] as const;
+const PESTAÑAS = ["turnos", "clientes", "historia", "servicios", "configuracion"] as const;
 
 // GET: listado de usuarios (solo esAdmin).
 export async function GET() {

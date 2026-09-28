@@ -63,7 +63,7 @@ model HorarioBloque {
 }
 
 model Turno {
-  id     String @id @default(cuid())
+  id String @id @default(cuid())
 
   servicio   Servicio @relation(fields: [servicioId], references: [id])
   servicioId String
@@ -88,10 +88,11 @@ model Turno {
   // Vínculo con las fichas. Los campos cliente*/mascota* de arriba se conservan tal
   // cual se cargaron (historial fiel); estas relaciones se completan solas al crear
   // el turno, buscando al tutor por teléfono — ver src/lib/fichas.ts.
-  tutor     Tutor?   @relation(fields: [tutorId], references: [id], onDelete: SetNull)
+  tutor     Tutor?     @relation(fields: [tutorId], references: [id], onDelete: SetNull)
   tutorId   String?
-  mascota   Mascota? @relation(fields: [mascotaId], references: [id], onDelete: SetNull)
+  mascota   Mascota?   @relation(fields: [mascotaId], references: [id], onDelete: SetNull)
   mascotaId String?
+  consultas Consulta[]
 
   @@index([fecha])
   @@index([servicioId, fecha])
@@ -121,8 +122,8 @@ model Tutor {
 }
 
 model Mascota {
-  id              String   @id @default(cuid())
-  tutor           Tutor    @relation(fields: [tutorId], references: [id])
+  id              String     @id @default(cuid())
+  tutor           Tutor      @relation(fields: [tutorId], references: [id])
   tutorId         String
   nombre          String
   nombreClave     String // nombre en minúsculas y sin espacios de más, para reconocerla al reservar
@@ -138,10 +139,11 @@ model Mascota {
   // Avisos que se muestran destacados al abrir la ficha (alergias, "muerde", etc.).
   alertas         String?
   notas           String?
-  fallecida       Boolean  @default(false)
+  fallecida       Boolean    @default(false)
   turnos          Turno[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  consultas       Consulta[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([tutorId, nombreClave])
 }
@@ -168,4 +170,71 @@ model AdminUser {
   // Dashboard queda siempre visible para cualquier usuario activo, y Usuarios es exclusivo de esAdmin.
   permisos     String[] @default([])
   activo       Boolean  @default(true)
+}
+
+// Historia clínica: una entrada por consulta. Solo la ven admin y usuarios con permiso
+// "historia" (veterinarios) — el control está en el servidor, ver src/app/api/consultas.
+// No se borran: cada edición guarda antes la versión anterior en ConsultaCambio.
+model Consulta {
+  id        String  @id @default(cuid())
+  mascota   Mascota @relation(fields: [mascotaId], references: [id])
+  mascotaId String
+  turno     Turno?  @relation(fields: [turnoId], references: [id], onDelete: SetNull)
+  turnoId   String?
+
+  fecha     String // "2026-09-28"
+  motivo    String
+  // Lo que cuenta el tutor: síntomas, desde cuándo, apetito, etc.
+  anamnesis String?
+
+  // Examen: lo rápido arriba, el resto opcional.
+  pesoKg                 Float?
+  temperatura            Float? // °C
+  frecuenciaCardiaca     Int? // latidos por minuto
+  frecuenciaRespiratoria Int? // respiraciones por minuto
+  condicionCorporal      Int? // escala WSAVA 1 a 9
+  mucosas                String?
+  hidratacion            String?
+  examen                 String? // hallazgos del examen
+
+  diagnostico    String?
+  tratamiento    String? // medicación, dosis, vía, frecuencia, duración e indicaciones
+  estudios       String? // estudios pedidos o resultados
+  proximoControl String? // "2026-10-05"
+
+  autorNombre String // quién la cargó (nombre del usuario en ese momento)
+  adjuntos    AdjuntoConsulta[]
+  cambios     ConsultaCambio[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([mascotaId, fecha])
+}
+
+// Archivos de la consulta (análisis, radiografías, recetas). La URL del storage nunca
+// se manda al navegador: se descargan por /api/adjuntos/[id], que controla el permiso.
+model AdjuntoConsulta {
+  id         String   @id @default(cuid())
+  consulta   Consulta @relation(fields: [consultaId], references: [id])
+  consultaId String
+  nombre     String
+  tipo       String
+  tamanio    Int
+  url        String
+  subidoPor  String
+  createdAt  DateTime @default(now())
+
+  @@index([consultaId])
+}
+
+// Versión anterior de una consulta cada vez que se edita (quién, cuándo y qué decía).
+model ConsultaCambio {
+  id              String   @id @default(cuid())
+  consulta        Consulta @relation(fields: [consultaId], references: [id])
+  consultaId      String
+  datosAnteriores Json
+  editadoPor      String
+  createdAt       DateTime @default(now())
+
+  @@index([consultaId])
 }

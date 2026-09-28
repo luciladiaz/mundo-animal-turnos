@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import TurnosPanel from "@/components/TurnosPanel";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { puedeVerFichas, tienePermiso } from "@/lib/autorizacion";
 
 export default async function TurnosPage() {
   const session = await auth();
@@ -10,7 +10,7 @@ export default async function TurnosPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <h1 className="font-display text-xl font-semibold text-humo-900">Turnos</h1>
-      <TurnosPanel puedeVerFichas={tienePermiso(session, "clientes")} />
+      <TurnosPanel puedeVerFichas={puedeVerFichas(session)} puedeCargarConsulta={tienePermiso(session, "historia")} />
     </div>
   );
 }

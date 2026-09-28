@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HistorialTurnos, { type TurnoHistorial } from "@/components/HistorialTurnos";
+import HistoriaClinica from "@/components/HistoriaClinica";
 import { calcularEdad, formatearFecha } from "@/lib/formatoFichas";
 import { getFechaHoyArgentina } from "@/lib/disponibilidad";
 
@@ -60,7 +61,15 @@ function formDesde(m: Mascota): FormMascota {
   };
 }
 
-export default function FichaMascota({ id }: { id: string }) {
+export default function FichaMascota({
+  id,
+  puedeVerHistoria,
+  turnoParaConsulta,
+}: {
+  id: string;
+  puedeVerHistoria: boolean;
+  turnoParaConsulta: string | null;
+}) {
   const router = useRouter();
   const [mascota, setMascota] = useState<Mascota | null>(null);
   const [noEncontrada, setNoEncontrada] = useState(false);
@@ -141,6 +150,9 @@ export default function FichaMascota({ id }: { id: string }) {
 
   const edad = mascota.fechaNacimiento && !mascota.fallecida ? calcularEdad(mascota.fechaNacimiento, getFechaHoyArgentina()) : null;
   const otrasMascotas = mascota.tutor.mascotas.filter((m) => m.id !== mascota.id);
+  // Si se llegó desde "Cargar consulta" en la agenda, el formulario arranca con la fecha
+  // y el servicio de ese turno.
+  const turnoOrigen = turnoParaConsulta ? mascota.turnos.find((t) => t.id === turnoParaConsulta) : undefined;
 
   return (
     <div className="flex flex-col gap-5">
@@ -273,6 +285,15 @@ export default function FichaMascota({ id }: { id: string }) {
             </button>
           </div>
         </form>
+      )}
+
+      {puedeVerHistoria && (
+        <HistoriaClinica
+          mascotaId={mascota.id}
+          especie={mascota.especie}
+          turnoInicial={turnoOrigen ? { id: turnoOrigen.id, fecha: turnoOrigen.fecha, motivo: turnoOrigen.servicio.nombre } : null}
+          onGuardado={cargar}
+        />
       )}
 
       <section className="flex flex-col gap-2">

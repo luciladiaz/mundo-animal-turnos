@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { puedeVerFichas } from "@/lib/autorizacion";
 import { claveNombreMascota, limpiarNombre } from "@/lib/fichas";
 import { datosMascotaSchema } from "@/lib/validacionFichas";
 
@@ -11,7 +11,7 @@ const crearMascotaSchema = datosMascotaSchema.extend({ tutorId: z.string().min(1
 // POST: agregar una mascota a la ficha de un tutor.
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!tienePermiso(session, "clientes")) {
+  if (!puedeVerFichas(session)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

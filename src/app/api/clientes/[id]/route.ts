@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { puedeVerFichas } from "@/lib/autorizacion";
 import { claveTelefono } from "@/lib/fichas";
 import { datosTutorSchema } from "@/lib/validacionFichas";
 
 // GET: ficha completa del tutor — datos, mascotas y todos sus turnos.
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!tienePermiso(session, "clientes")) {
+  if (!puedeVerFichas(session)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 // PATCH: editar los datos del tutor.
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!tienePermiso(session, "clientes")) {
+  if (!puedeVerFichas(session)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

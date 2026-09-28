@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { puedeVerFichas } from "@/lib/autorizacion";
 
 const unirSchema = z.object({ destinoId: z.string().min(1) });
 
@@ -23,14 +23,15 @@ const CAMPOS_RESEÑA = [
 
 /**
  * POST: une esta mascota (duplicada, ej. "Flopy") con otra del mismo tutor ("Floppy").
- * Los turnos pasan a la ficha destino, los datos que allá faltaban se completan con los
- * de esta, y esta ficha se elimina. Los turnos en sí no se modifican salvo su vínculo.
- * OJO: cualquier tabla nueva que cuelgue de Mascota (historia clínica, vacunas) tiene
- * que moverse también en esta transacción, o se perdería al borrar la ficha duplicada.
+ * Los turnos y las consultas pasan a la ficha destino, los datos que allá faltaban se
+ * completan con los de esta, y esta ficha se elimina. Turnos y consultas no se modifican
+ * salvo su vínculo.
+ * OJO: cualquier tabla nueva que cuelgue de Mascota (ej. vacunas) tiene que moverse
+ * también en esta transacción, o la base rechaza el borrado de la ficha duplicada.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!tienePermiso(session, "clientes")) {
+  if (!puedeVerFichas(session)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   await prisma.$transaction([
     prisma.turno.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
+    prisma.consulta.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.mascota.update({ where: { id: destino.id }, data: completar }),
     prisma.mascota.delete({ where: { id } }),
   ]);

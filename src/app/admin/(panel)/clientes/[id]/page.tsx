@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import FichaCliente from "@/components/FichaCliente";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { puedeVerFichas } from "@/lib/autorizacion";
 
 export default async function FichaClientePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!tienePermiso(session, "clientes")) redirect("/admin");
+  if (!puedeVerFichas(session)) redirect("/admin");
   const { id } = await params;
 
   return (

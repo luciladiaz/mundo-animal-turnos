@@ -78,7 +78,13 @@ function rangoFechas(desde: string, hasta: string): string[] {
   return fechas;
 }
 
-export default function TurnosPanel({ puedeVerFichas = false }: { puedeVerFichas?: boolean }) {
+export default function TurnosPanel({
+  puedeVerFichas = false,
+  puedeCargarConsulta = false,
+}: {
+  puedeVerFichas?: boolean;
+  puedeCargarConsulta?: boolean;
+}) {
   const hoy = useMemo(() => getFechaHoyArgentina(), []);
   const [vista, setVista] = useState<Vista>("semana");
   const [fechaRef, setFechaRef] = useState(hoy);
@@ -262,12 +268,22 @@ export default function TurnosPanel({ puedeVerFichas = false }: { puedeVerFichas
             </p>
             {t.notas && <p className="text-xs text-humo-400">Notas: {t.notas}</p>}
             {puedeVerFichas && (t.mascotaId || t.tutorId) && (
-              <Link
-                href={t.mascotaId ? `/admin/mascotas/${t.mascotaId}` : `/admin/clientes/${t.tutorId}`}
-                className="mt-1 inline-block text-xs font-medium text-[var(--color-primario)] hover:underline"
-              >
-                Ver ficha →
-              </Link>
+              <div className="mt-1 flex flex-wrap gap-3">
+                <Link
+                  href={t.mascotaId ? `/admin/mascotas/${t.mascotaId}` : `/admin/clientes/${t.tutorId}`}
+                  className="text-xs font-medium text-[var(--color-primario)] hover:underline"
+                >
+                  Ver ficha →
+                </Link>
+                {puedeCargarConsulta && t.mascotaId && t.estado !== "CANCELADO" && (
+                  <Link
+                    href={`/admin/mascotas/${t.mascotaId}?turno=${t.id}`}
+                    className="text-xs font-medium text-[var(--color-primario)] hover:underline"
+                  >
+                    Cargar consulta →
+                  </Link>
+                )}
+              </div>
             )}
             <p className="mt-1 flex items-center gap-1 text-xs text-humo-400">
               <span className={`h-1.5 w-1.5 rounded-full ${ORIGEN_PUNTO[t.origen]}`} />

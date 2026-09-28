@@ -14,6 +14,7 @@ interface Usuario {
 const PESTAÑAS: { key: string; label: string }[] = [
   { key: "turnos", label: "Turnos" },
   { key: "clientes", label: "Clientes" },
+  { key: "historia", label: "Historia clínica (veterinario)" },
   { key: "servicios", label: "Servicios" },
   { key: "configuracion", label: "Configuración" },
 ];
