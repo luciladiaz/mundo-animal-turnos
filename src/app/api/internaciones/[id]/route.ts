@@ -15,6 +15,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     include: {
       mascota: { select: { id: true, nombre: true, especie: true, alertas: true, tutor: { select: { id: true, nombre: true, telefono: true } } } },
       partes: { orderBy: { createdAt: "desc" } },
+      estudios: {
+        include: { adjuntos: { select: { id: true, nombre: true, tipo: true, tamanio: true }, orderBy: { createdAt: "asc" } } },
+        orderBy: { fecha: "desc" },
+      },
       medicaciones: {
         include: { tomas: { orderBy: { administradaEn: "desc" } } },
         orderBy: [{ activa: "desc" }, { createdAt: "asc" }],

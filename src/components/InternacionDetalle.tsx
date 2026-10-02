@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Campo, INPUT, MensajeError } from "@/components/ui/Campos";
 import { COLOR_ESTADO_PARTE, ESTADO_INTERNACION, ESTADO_PARTE, fechaHoraAR, type EstadoParte } from "@/lib/estadosInternacion";
+import EstudiosInternacion, { type Estudio } from "@/components/EstudiosInternacion";
 
 interface Toma {
   id: string;
@@ -33,6 +34,8 @@ interface Parte {
   autor: string;
   enviadoEn: string | null;
   enviadoPor: string | null;
+  editadoEn: string | null;
+  editadoPor: string | null;
   createdAt: string;
 }
 interface Internacion {
@@ -49,6 +52,7 @@ interface Internacion {
   indicacionesAlta: string | null;
   mascota: { id: string; nombre: string; especie: string | null; alertas: string | null; tutor: { id: string; nombre: string; telefono: string } };
   partes: Parte[];
+  estudios: Estudio[];
   medicaciones: Medicacion[];
 }
 
@@ -77,10 +81,12 @@ function estadoToma(m: Medicacion, ahora: number): { texto: string; clase: strin
   return { texto: `Próxima: ${fechaHoraAR(new Date(proxima))}`, clase: "bg-humo-50 text-humo-600" };
 }
 
-export default function InternacionDetalle({ id }: { id: string }) {
+export default function InternacionDetalle({ id, esAdmin }: { id: string; esAdmin: boolean }) {
   const [internacion, setInternacion] = useState<Internacion | null>(null);
   const [noEncontrada, setNoEncontrada] = useState(false);
   const [parte, setParte] = useState<{ estado: EstadoParte; parteFamilia: string; notaClinica: string } | null>(null);
+  // Parte que se está corrigiendo (solo admin): id + valores del formulario.
+  const [corrigiendo, setCorrigiendo] = useState<{ id: string; estado: EstadoParte; parteFamilia: string; notaClinica: string } | null>(null);
   const [med, setMed] = useState<{ medicamento: string; dosis: string; via: string; frecuencia: string; indicaciones: string } | null>(null);
   const [egreso, setEgreso] = useState<{ tipo: "ALTA" | "DERIVADA" | "FALLECIDA"; indicacionesAlta: string; notaEgreso: string } | null>(null);
   const [tomasAbiertas, setTomasAbiertas] = useState<Record<string, boolean>>({});
@@ -180,12 +186,13 @@ export default function InternacionDetalle({ id }: { id: string }) {
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-lg font-semibold text-humo-900">Partes de evolución</h2>
-          {activa && !parte && (
+          {activa && !parte && esAdmin && (
             <button onClick={() => setParte({ estado: "ESTABLE", parteFamilia: "", notaClinica: "" })} className="btn-primary rounded-lg px-4 py-2 text-sm">
               + Nuevo parte
             </button>
           )}
         </div>
+        {!esAdmin && <p className="text-xs text-humo-500">Los partes los cargan y corrigen los administradores.</p>}
         {parte && (
           <form
             onSubmit={(e) => {
@@ -233,37 +240,110 @@ export default function InternacionDetalle({ id }: { id: string }) {
           <p className="text-sm text-humo-500">Todavía no hay partes.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {i.partes.map((p) => (
-              <li key={p.id} className="flex flex-col gap-1.5 rounded-xl border border-humo-100 bg-white p-3 text-sm">
-                <p className="flex flex-wrap items-center gap-2 text-xs text-humo-500">
-                  <span className={`rounded-full px-2 py-0.5 font-medium ${COLOR_ESTADO_PARTE[p.estado]}`}>
-                    {ESTADO_PARTE[p.estado].emoji} {ESTADO_PARTE[p.estado].texto}
-                  </span>
-                  {fechaHoraAR(p.createdAt)} · {p.autor}
-                  {p.enviadoEn ? (
-                    <span className="text-exito-600">
-                      · ✓ enviado a la familia {fechaHoraAR(p.enviadoEn)}
-                      {p.enviadoPor && ` por ${p.enviadoPor}`}
+            {i.partes.map((p) =>
+              corrigiendo?.id === p.id ? (
+                <li key={p.id}>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const { id: parteId, ...datos } = corrigiendo;
+                      enviar(`/api/internaciones/${id}/partes/${parteId}`, "PATCH", datos, () => setCorrigiendo(null));
+                    }}
+                    className="flex flex-col gap-3 rounded-xl border-2 border-mora-200 bg-white p-3"
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {(Object.keys(ESTADO_PARTE) as EstadoParte[]).map((e) => (
+                        <button
+                          key={e}
+                          type="button"
+                          onClick={() => setCorrigiendo({ ...corrigiendo, estado: e })}
+                          className={`rounded-full border px-3 py-1.5 text-sm ${corrigiendo.estado === e ? `${COLOR_ESTADO_PARTE[e]} border-transparent font-medium` : "border-humo-200 text-humo-600"}`}
+                        >
+                          {ESTADO_PARTE[e].emoji} {ESTADO_PARTE[e].texto}
+                        </button>
+                      ))}
+                    </div>
+                    <Campo etiqueta="Parte para la familia">
+                      <textarea
+                        required
+                        rows={3}
+                        value={corrigiendo.parteFamilia}
+                        onChange={(e) => setCorrigiendo({ ...corrigiendo, parteFamilia: e.target.value })}
+                        className={INPUT}
+                      />
+                    </Campo>
+                    <Campo etiqueta="Nota clínica (solo la ve el veterinario)">
+                      <textarea
+                        rows={3}
+                        value={corrigiendo.notaClinica}
+                        onChange={(e) => setCorrigiendo({ ...corrigiendo, notaClinica: e.target.value })}
+                        className={INPUT}
+                      />
+                    </Campo>
+                    {p.enviadoEn && (
+                      <p className="text-xs text-alerta-600">
+                        Este parte ya se le mandó a la familia: si lo corregís, avisale a la secretaria para que mande la versión nueva.
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button disabled={enviando} className="btn-primary rounded-lg px-4 py-2 text-sm disabled:opacity-60">
+                        Guardar corrección
+                      </button>
+                      <button type="button" onClick={() => setCorrigiendo(null)} className="btn-secondary rounded-lg px-4 py-2 text-sm font-medium">
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </li>
+              ) : (
+                <li key={p.id} className="flex flex-col gap-1.5 rounded-xl border border-humo-100 bg-white p-3 text-sm">
+                  <p className="flex flex-wrap items-center gap-2 text-xs text-humo-500">
+                    <span className={`rounded-full px-2 py-0.5 font-medium ${COLOR_ESTADO_PARTE[p.estado]}`}>
+                      {ESTADO_PARTE[p.estado].emoji} {ESTADO_PARTE[p.estado].texto}
                     </span>
-                  ) : (
-                    <span className="text-alerta-600">· sin enviar todavía</span>
-                  )}
-                </p>
-                <p className="whitespace-pre-line text-humo-800">
-                  <span className="text-xs text-humo-400">Para la familia: </span>
-                  {p.parteFamilia}
-                </p>
-                {p.notaClinica && (
-                  <p className="whitespace-pre-line text-humo-600">
-                    <span className="text-xs text-humo-400">Nota clínica: </span>
-                    {p.notaClinica}
+                    {fechaHoraAR(p.createdAt)} · {p.autor}
+                    {p.enviadoEn ? (
+                      <span className="text-exito-600">
+                        · ✓ enviado a la familia {fechaHoraAR(p.enviadoEn)}
+                        {p.enviadoPor && ` por ${p.enviadoPor}`}
+                      </span>
+                    ) : (
+                      <span className="text-alerta-600">· sin enviar todavía</span>
+                    )}
+                    {p.editadoEn && (
+                      <span className="text-humo-400">
+                        · corregido {fechaHoraAR(p.editadoEn)}
+                        {p.editadoPor && ` por ${p.editadoPor}`}
+                      </span>
+                    )}
+                    {esAdmin && !corrigiendo && (
+                      <button
+                        type="button"
+                        onClick={() => setCorrigiendo({ id: p.id, estado: p.estado, parteFamilia: p.parteFamilia, notaClinica: p.notaClinica ?? "" })}
+                        className="ml-auto font-medium text-[var(--color-primario)] hover:underline"
+                      >
+                        Corregir
+                      </button>
+                    )}
                   </p>
-                )}
-              </li>
-            ))}
+                  <p className="whitespace-pre-line text-humo-800">
+                    <span className="text-xs text-humo-400">Para la familia: </span>
+                    {p.parteFamilia}
+                  </p>
+                  {p.notaClinica && (
+                    <p className="whitespace-pre-line text-humo-600">
+                      <span className="text-xs text-humo-400">Nota clínica: </span>
+                      {p.notaClinica}
+                    </p>
+                  )}
+                </li>
+              )
+            )}
           </ul>
         )}
       </section>
+
+      <EstudiosInternacion internacionId={id} estudios={i.estudios} onCambio={cargar} />
 
       {/* Hoja de medicación */}
       <section className="flex flex-col gap-2">

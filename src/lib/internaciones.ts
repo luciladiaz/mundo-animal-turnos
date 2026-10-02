@@ -42,7 +42,11 @@ export const egresoSchema = z.object({
   notaEgreso: textoOpcional,
 });
 
-export async function internar(db: PrismaClient, datos: z.infer<typeof internarSchema>, usuario: string) {
+export async function internar(
+  db: PrismaClient,
+  datos: Omit<z.infer<typeof internarSchema>, "diagnostico"> & { diagnostico?: string | null },
+  usuario: string
+) {
   const mascota = await db.mascota.findUnique({ where: { id: datos.mascotaId }, select: { id: true, fallecida: true } });
   if (!mascota) throw new ErrorNegocio("Mascota no encontrada", 404);
   if (mascota.fallecida) throw new ErrorNegocio("La mascota figura como fallecida");
@@ -54,7 +58,7 @@ export async function internar(db: PrismaClient, datos: z.infer<typeof internarS
       mascotaId: mascota.id,
       ingresoEn: datos.ingresoEn ? fechaHoraArgentina(datos.ingresoEn) : new Date(),
       motivo: datos.motivo,
-      diagnostico: datos.diagnostico,
+      diagnostico: datos.diagnostico ?? null,
       veterinario: datos.veterinario,
       creadaPor: usuario,
     },
@@ -148,4 +152,35 @@ export function proximaToma(
   if (!med.activa || !med.frecuenciaHoras) return null;
   if (!ultimaToma) return new Date(med.createdAt);
   return new Date(new Date(ultimaToma).getTime() + med.frecuenciaHoras * 60 * 60 * 1000);
+}
+
+/** Corrección de un parte (solo admin). Queda registrado quién y cuándo lo corrigió. */
+export async function editarParte(db: PrismaClient, parteId: string, datos: z.infer<typeof parteSchema>, usuario: string) {
+  const parte = await db.parteInternacion.findUnique({ where: { id: parteId }, select: { id: true } });
+  if (!parte) throw new ErrorNegocio("Parte no encontrado", 404);
+  return db.parteInternacion.update({
+    where: { id: parteId },
+    data: { ...datos, editadoEn: new Date(), editadoPor: usuario },
+  });
+}
+
+export const estudioSchema = z.object({
+  tipo: z.string().trim().min(1, "Elegí el tipo de estudio"),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Fecha inválida").optional().nullable(),
+  resultado: textoOpcional,
+});
+
+/** Estudio hecho durante la internación. Se puede cargar también después del alta (los resultados suelen llegar más tarde). */
+export async function crearEstudio(db: PrismaClient, internacionId: string, datos: z.infer<typeof estudioSchema>, usuario: string) {
+  const internacion = await db.internacion.findUnique({ where: { id: internacionId }, select: { id: true } });
+  if (!internacion) throw new ErrorNegocio("Internación no encontrada", 404);
+  return db.estudioInternacion.create({
+    data: {
+      internacionId,
+      tipo: datos.tipo,
+      fecha: datos.fecha ? fechaHoraArgentina(datos.fecha) : new Date(),
+      resultado: datos.resultado,
+      autor: usuario,
+    },
+  });
 }

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import InternacionDetalle from "@/components/InternacionDetalle";
 import { auth } from "@/lib/auth";
-import { tienePermiso } from "@/lib/autorizacion";
+import { esAdmin, tienePermiso } from "@/lib/autorizacion";
 
 export default async function InternacionPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -10,7 +10,7 @@ export default async function InternacionPage({ params }: { params: Promise<{ id
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <InternacionDetalle id={id} />
+      <InternacionDetalle id={id} esAdmin={esAdmin(session)} />
     </div>
   );
 }

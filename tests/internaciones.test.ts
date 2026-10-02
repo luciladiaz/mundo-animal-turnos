@@ -3,7 +3,7 @@
  *   TEST_DATABASE_URL="postgresql://postgres:prueba@localhost:54329/pruebas" npm run test:internaciones
  */
 import { PrismaClient } from "@prisma/client";
-import { agregarMedicacion, agregarParte, darEgreso, internar, proximaToma, registrarToma, suspenderMedicacion } from "../src/lib/internaciones";
+import { agregarMedicacion, agregarParte, crearEstudio, darEgreso, editarParte, internar, proximaToma, registrarToma, suspenderMedicacion } from "../src/lib/internaciones";
 import { ErrorNegocio } from "../src/lib/errorNegocio";
 
 const url = process.env.TEST_DATABASE_URL ?? "";
@@ -35,7 +35,7 @@ async function falla(p: Promise<unknown>, contiene: string, d: string) {
 }
 
 async function main() {
-  await db.$executeRawUnsafe(`TRUNCATE "TomaMedicacion","MedicacionInternacion","ParteInternacion","Internacion" CASCADE`);
+  await db.$executeRawUnsafe(`TRUNCATE "AdjuntoEstudio","EstudioInternacion","TomaMedicacion","MedicacionInternacion","ParteInternacion","Internacion" CASCADE`);
   const tutor = await db.tutor.create({ data: { nombre: "Tutor Prueba", telefono: "2990000001", telefonoClave: `i${Date.now()}`.slice(-10) } });
   const luna = await db.mascota.create({ data: { tutorId: tutor.id, nombre: "Luna", nombreClave: "luna", especie: "Perro" } });
   const toby = await db.mascota.create({ data: { tutorId: tutor.id, nombre: "Toby", nombreClave: "toby", especie: "Gato" } });
@@ -54,6 +54,14 @@ async function main() {
   console.log("\n2. Partes");
   const p1 = await agregarParte(db, i1.id, { estado: "OBSERVACION", parteFamilia: "Comió un poquito", notaClinica: "T 39,4 °C" }, U);
   ok(p1.parteFamilia === "Comió un poquito" && p1.notaClinica === "T 39,4 °C" && p1.enviadoEn === null, "Parte con texto para la familia y nota clínica, sin enviar");
+
+  const corregido = await editarParte(db, p1.id, { estado: "ESTABLE", parteFamilia: "Comió bien", notaClinica: "T 38,9 °C" }, "Admin Prueba");
+  ok(corregido.parteFamilia === "Comió bien" && corregido.editadoPor === "Admin Prueba" && corregido.editadoEn, "Corrección de parte: guarda el texto nuevo y quién/cuándo lo corrigió");
+
+  console.log("\n2b. Estudios");
+  const est = await crearEstudio(db, i1.id, { tipo: "Ecografía", fecha: "2026-10-02T10:15", resultado: "Asas intestinales engrosadas" }, U);
+  ok(est.tipo === "Ecografía" && est.fecha.toISOString() === "2026-10-02T13:15:00.000Z", "Estudio con fecha en hora argentina");
+  await falla(crearEstudio(db, "no-existe", { tipo: "x", fecha: null, resultado: null }, U), "no encontrada", "Estudio de una internación inexistente: rechazado");
 
   console.log("\n3. Hoja de medicación");
   const m1 = await agregarMedicacion(db, i1.id, { medicamento: "Metronidazol", dosis: "250 mg", via: "Oral", frecuenciaHoras: 12, indicaciones: null }, U);
@@ -74,6 +82,8 @@ async function main() {
   await falla(agregarParte(db, i1.id, { estado: "ESTABLE", parteFamilia: "x", notaClinica: null }, U), "ya terminó", "No se cargan partes después del alta");
   const i2 = await internar(db, { mascotaId: luna.id, motivo: "Control", veterinario: "Dra. Prueba" }, U);
   ok(i2.estado === "INTERNADA", "Después del alta se la puede volver a internar");
+  const tarde = await crearEstudio(db, i1.id, { tipo: "Análisis de sangre", fecha: null, resultado: "Llegó después del alta" }, U);
+  ok(tarde.internacionId === i1.id, "Se puede cargar un estudio después del alta (resultados que llegan tarde)");
 
   const tobyInternacion = await db.internacion.findFirstOrThrow({ where: { mascotaId: toby.id, estado: "INTERNADA" } });
   await darEgreso(db, tobyInternacion.id, { tipo: "FALLECIDA", indicacionesAlta: null, notaEgreso: "Paro cardiorrespiratorio" }, U);

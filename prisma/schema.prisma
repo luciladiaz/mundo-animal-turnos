@@ -567,6 +567,7 @@ model Internacion {
   altaEnviadaPor   String?
   partes           ParteInternacion[]
   medicaciones     MedicacionInternacion[]
+  estudios         EstudioInternacion[]
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
@@ -584,6 +585,9 @@ model ParteInternacion {
   autor         String
   enviadoEn     DateTime?
   enviadoPor    String?
+  // Solo los admin cargan y corrigen partes; queda registrado quién corrigió y cuándo.
+  editadoEn     DateTime?
+  editadoPor    String?
   createdAt     DateTime    @default(now())
 
   @@index([internacionId, createdAt])
@@ -618,4 +622,35 @@ model TomaMedicacion {
   observaciones   String?
 
   @@index([medicacionId, administradaEn])
+}
+
+// Estudios hechos durante la internación (análisis, radiografías, ecografías...),
+// con sus archivos. Clínico: solo veterinario. Los archivos se sirven por
+// /api/adjuntos-estudio/[id] con control de permiso (la URL real nunca sale al navegador).
+model EstudioInternacion {
+  id            String           @id @default(cuid())
+  internacion   Internacion      @relation(fields: [internacionId], references: [id])
+  internacionId String
+  tipo          String
+  fecha         DateTime         @default(now())
+  resultado     String?
+  autor         String
+  adjuntos      AdjuntoEstudio[]
+  createdAt     DateTime         @default(now())
+
+  @@index([internacionId])
+}
+
+model AdjuntoEstudio {
+  id        String             @id @default(cuid())
+  estudio   EstudioInternacion @relation(fields: [estudioId], references: [id])
+  estudioId String
+  nombre    String
+  tipo      String
+  tamanio   Int
+  url       String
+  subidoPor String
+  createdAt DateTime           @default(now())
+
+  @@index([estudioId])
 }

@@ -29,3 +29,14 @@ export function ahoraArgentinaInput(): string {
   const ar = new Date(Date.now() - 3 * 60 * 60 * 1000);
   return ar.toISOString().slice(0, 16);
 }
+
+export const TIPOS_ESTUDIO = [
+  "Análisis de sangre",
+  "Análisis de orina",
+  "Coproparasitológico",
+  "Radiografía",
+  "Ecografía",
+  "Electrocardiograma",
+  "Citología",
+  "Otro",
+];
