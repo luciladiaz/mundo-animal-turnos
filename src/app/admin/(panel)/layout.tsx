@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { esAdmin, puedeVerFichas, tienePermiso } from "@/lib/autorizacion";
+import { esAdmin, puedeVerFichas, puedeVerInternados, tienePermiso } from "@/lib/autorizacion";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import LogoutButton from "@/components/LogoutButton";
 import MarcaBadge from "@/components/MarcaBadge";
@@ -12,6 +12,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   const nav = [{ href: "/admin", label: "Dashboard" }];
   if (tienePermiso(session, "turnos")) nav.push({ href: "/admin/turnos", label: "Turnos" });
   if (puedeVerFichas(session)) nav.push({ href: "/admin/clientes", label: "Clientes" });
+  if (puedeVerInternados(session)) nav.push({ href: "/admin/internados", label: "Internados" });
   if (tienePermiso(session, "recordatorios")) nav.push({ href: "/admin/recordatorios", label: "Recordatorios" });
   if (tienePermiso(session, "ventas")) nav.push({ href: "/admin/ventas", label: "Ventas y caja" });
   if (tienePermiso(session, "stock")) nav.push({ href: "/admin/stock", label: "Stock" });

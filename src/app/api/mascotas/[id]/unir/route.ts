@@ -23,7 +23,7 @@ const CAMPOS_RESEÑA = [
 
 /**
  * POST: une esta mascota (duplicada, ej. "Flopy") con otra del mismo tutor ("Floppy").
- * Los turnos, las consultas y las vacunas pasan a la ficha destino, los datos que allá faltaban se
+ * Los turnos, las consultas, las vacunas y las internaciones pasan a la ficha destino, los datos que allá faltaban se
  * completan con los de esta, y esta ficha se elimina. Turnos y consultas no se modifican
  * salvo su vínculo.
  * OJO: cualquier tabla nueva que cuelgue de Mascota tiene que moverse
@@ -57,10 +57,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (destino[campo] == null && origen[campo] != null) completar[campo] = origen[campo];
   }
 
+  const activas = await prisma.internacion.count({ where: { mascotaId: { in: [id, destino.id] }, estado: "INTERNADA" } });
+  if (activas > 1) {
+    return NextResponse.json({ error: "Las dos fichas tienen una internación activa: dale el alta a una antes de unirlas" }, { status: 400 });
+  }
+
   await prisma.$transaction([
     prisma.turno.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.consulta.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.aplicacion.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
+    prisma.internacion.updateMany({ where: { mascotaId: id }, data: { mascotaId: destino.id } }),
     prisma.mascota.update({ where: { id: destino.id }, data: completar }),
     prisma.mascota.delete({ where: { id } }),
   ]);

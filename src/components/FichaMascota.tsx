@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import HistorialTurnos, { type TurnoHistorial } from "@/components/HistorialTurnos";
 import HistoriaClinica from "@/components/HistoriaClinica";
 import PlanSanitario from "@/components/PlanSanitario";
+import InternacionMascota from "@/components/InternacionMascota";
 import { calcularEdad, formatearFecha } from "@/lib/formatoFichas";
 import { getFechaHoyArgentina } from "@/lib/disponibilidad";
 
@@ -66,10 +67,12 @@ export default function FichaMascota({
   id,
   puedeVerHistoria,
   turnoParaConsulta,
+  usuarioNombre = "",
 }: {
   id: string;
   puedeVerHistoria: boolean;
   turnoParaConsulta: string | null;
+  usuarioNombre?: string;
 }) {
   const router = useRouter();
   const [mascota, setMascota] = useState<Mascota | null>(null);
@@ -163,6 +166,8 @@ export default function FichaMascota({
       </Link>
 
       {error && <div className="rounded-xl bg-peligro-50 px-4 py-2 text-sm text-peligro-600">{error}</div>}
+
+      <InternacionMascota mascotaId={mascota.id} puedeInternar={puedeVerHistoria} usuarioNombre={usuarioNombre} fallecida={mascota.fallecida} />
 
       {mascota.alertas && (
         <div className="rounded-xl border border-peligro-500/30 bg-peligro-50 px-4 py-3 text-sm text-peligro-600">

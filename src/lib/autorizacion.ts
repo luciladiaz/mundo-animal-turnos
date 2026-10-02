@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
 
-export type Pestaña = "turnos" | "clientes" | "historia" | "recordatorios" | "ventas" | "stock" | "anular" | "servicios" | "configuracion";
+export type Pestaña = "turnos" | "clientes" | "historia" | "recordatorios" | "internados" | "ventas" | "stock" | "anular" | "servicios" | "configuracion";
 
 type SessionUser = { esAdmin?: boolean; permisos?: string[] } | undefined;
 
@@ -27,4 +27,12 @@ export function tienePermiso(session: Session | null, pestaña: Pestaña): boole
  */
 export function puedeVerFichas(session: Session | null): boolean {
   return tienePermiso(session, "clientes") || tienePermiso(session, "historia");
+}
+
+/**
+ * Internados: la secretaria (permiso "internados") ve la lista y los partes para la
+ * familia; el veterinario ("historia") además ve notas clínicas y la hoja de medicación.
+ */
+export function puedeVerInternados(session: Session | null): boolean {
+  return tienePermiso(session, "internados") || tienePermiso(session, "historia");
 }

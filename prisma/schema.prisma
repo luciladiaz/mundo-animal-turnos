@@ -125,8 +125,8 @@ model Tutor {
 }
 
 model Mascota {
-  id              String       @id @default(cuid())
-  tutor           Tutor        @relation(fields: [tutorId], references: [id])
+  id              String        @id @default(cuid())
+  tutor           Tutor         @relation(fields: [tutorId], references: [id])
   tutorId         String
   nombre          String
   nombreClave     String // nombre en minúsculas y sin espacios de más, para reconocerla al reservar
@@ -142,12 +142,13 @@ model Mascota {
   // Avisos que se muestran destacados al abrir la ficha (alergias, "muerde", etc.).
   alertas         String?
   notas           String?
-  fallecida       Boolean      @default(false)
+  fallecida       Boolean       @default(false)
   turnos          Turno[]
   consultas       Consulta[]
   aplicaciones    Aplicacion[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  internaciones   Internacion[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([tutorId, nombreClave])
 }
@@ -524,4 +525,97 @@ model PagoCuentaCorriente {
   createdAt   DateTime         @default(now())
 
   @@index([tutorId])
+}
+
+// ============================================================================
+// INTERNACIONES
+//  * Una sola internación activa por mascota (índice único parcial en la migración).
+//  * Cada parte tiene dos textos: notaClinica (solo veterinario, permiso "historia")
+//    y parteFamilia (lo que la secretaria le manda al tutor, permiso "internados").
+//  * Hoja de medicación: cada toma queda registrada con quién y cuándo.
+// ============================================================================
+
+enum EstadoInternacion {
+  INTERNADA
+  ALTA
+  DERIVADA
+  FALLECIDA
+}
+
+enum EstadoParte {
+  ESTABLE
+  OBSERVACION
+  DELICADO
+}
+
+model Internacion {
+  id               String                  @id @default(cuid())
+  mascota          Mascota                 @relation(fields: [mascotaId], references: [id])
+  mascotaId        String
+  estado           EstadoInternacion       @default(INTERNADA)
+  ingresoEn        DateTime                @default(now())
+  motivo           String
+  diagnostico      String?
+  veterinario      String // a cargo
+  creadaPor        String
+  // Egreso (alta, derivación o fallecimiento)
+  egresoEn         DateTime?
+  egresoPor        String?
+  notaEgreso       String? // clínica, solo veterinario
+  indicacionesAlta String? // para la familia (se manda por WhatsApp)
+  altaEnviadaEn    DateTime?
+  altaEnviadaPor   String?
+  partes           ParteInternacion[]
+  medicaciones     MedicacionInternacion[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([estado])
+  @@index([mascotaId])
+}
+
+model ParteInternacion {
+  id            String      @id @default(cuid())
+  internacion   Internacion @relation(fields: [internacionId], references: [id])
+  internacionId String
+  estado        EstadoParte
+  parteFamilia  String
+  notaClinica   String?
+  autor         String
+  enviadoEn     DateTime?
+  enviadoPor    String?
+  createdAt     DateTime    @default(now())
+
+  @@index([internacionId, createdAt])
+}
+
+model MedicacionInternacion {
+  id              String           @id @default(cuid())
+  internacion     Internacion      @relation(fields: [internacionId], references: [id])
+  internacionId   String
+  medicamento     String
+  dosis           String // "250 mg", "1 comprimido", "5 ml"
+  via             String? // oral, IV, SC, IM...
+  // Cada cuántas horas; null = según necesidad (no calcula próxima toma).
+  frecuenciaHoras Int?
+  indicaciones    String?
+  activa          Boolean          @default(true)
+  creadaPor       String
+  suspendidaEn    DateTime?
+  suspendidaPor   String?
+  tomas           TomaMedicacion[]
+  createdAt       DateTime         @default(now())
+
+  @@index([internacionId])
+}
+
+model TomaMedicacion {
+  id              String                @id @default(cuid())
+  medicacion      MedicacionInternacion @relation(fields: [medicacionId], references: [id])
+  medicacionId    String
+  administradaEn  DateTime              @default(now())
+  administradaPor String
+  observaciones   String?
+
+  @@index([medicacionId, administradaEn])
 }

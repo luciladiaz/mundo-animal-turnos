@@ -22,6 +22,7 @@ export default async function FichaMascotaPage({
         id={id}
         puedeVerHistoria={tienePermiso(session, "historia")}
         turnoParaConsulta={turno ?? null}
+        usuarioNombre={session?.user?.name ?? ""}
       />
     </div>
   );
