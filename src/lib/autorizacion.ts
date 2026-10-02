@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
 
-export type Pestaña = "turnos" | "clientes" | "historia" | "recordatorios" | "servicios" | "configuracion";
+export type Pestaña = "turnos" | "clientes" | "historia" | "recordatorios" | "ventas" | "stock" | "anular" | "servicios" | "configuracion";
 
 type SessionUser = { esAdmin?: boolean; permisos?: string[] } | undefined;
 

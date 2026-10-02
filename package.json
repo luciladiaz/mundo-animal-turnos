@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "test:ventas": "tsx tests/circuito-ventas.test.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

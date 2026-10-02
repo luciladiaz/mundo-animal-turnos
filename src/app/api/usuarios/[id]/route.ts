@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { esAdmin } from "@/lib/autorizacion";
 
-const PESTAÑAS = ["turnos", "clientes", "historia", "recordatorios", "servicios", "configuracion"] as const;
+const PESTAÑAS = ["turnos", "clientes", "historia", "recordatorios", "ventas", "stock", "anular", "servicios", "configuracion"] as const;
 
 /** true si, sacando a `id`, no quedaría ningún admin activo (para no bloquear el acceso a todo el panel). */
 async function esUltimoAdminActivo(id: string): Promise<boolean> {

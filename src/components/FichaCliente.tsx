@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HistorialTurnos, { type TurnoHistorial } from "@/components/HistorialTurnos";
+import CuentaCorrienteCliente from "@/components/CuentaCorrienteCliente";
 import { calcularEdad, linkWhatsApp } from "@/lib/formatoFichas";
 import { getFechaHoyArgentina } from "@/lib/disponibilidad";
 
@@ -47,7 +48,7 @@ function formDesde(c: Cliente) {
   };
 }
 
-export default function FichaCliente({ id }: { id: string }) {
+export default function FichaCliente({ id, puedeVender = false }: { id: string; puedeVender?: boolean }) {
   const router = useRouter();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [noEncontrado, setNoEncontrado] = useState(false);
@@ -290,6 +291,8 @@ export default function FichaCliente({ id }: { id: string }) {
           </div>
         )}
       </section>
+
+      {puedeVender && <CuentaCorrienteCliente tutorId={cliente.id} />}
 
       {/* Turnos */}
       <section className="flex flex-col gap-2">

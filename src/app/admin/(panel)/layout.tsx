@@ -13,6 +13,8 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   if (tienePermiso(session, "turnos")) nav.push({ href: "/admin/turnos", label: "Turnos" });
   if (puedeVerFichas(session)) nav.push({ href: "/admin/clientes", label: "Clientes" });
   if (tienePermiso(session, "recordatorios")) nav.push({ href: "/admin/recordatorios", label: "Recordatorios" });
+  if (tienePermiso(session, "ventas")) nav.push({ href: "/admin/ventas", label: "Ventas y caja" });
+  if (tienePermiso(session, "stock")) nav.push({ href: "/admin/stock", label: "Stock" });
   if (tienePermiso(session, "servicios")) nav.push({ href: "/admin/servicios", label: "Servicios" });
   if (esAdmin(session)) nav.push({ href: "/admin/usuarios", label: "Usuarios" });
   if (tienePermiso(session, "configuracion")) nav.push({ href: "/admin/configuracion", label: "Configuración" });

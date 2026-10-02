@@ -30,14 +30,15 @@ enum OrigenTurno {
 }
 
 model Servicio {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   nombre      String
   descripcion String?
   precio      Float?
-  activo      Boolean  @default(true)
+  activo      Boolean     @default(true)
   turnos      Turno[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ventaItems  VentaItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model ConfiguracionNegocio {
@@ -104,21 +105,23 @@ model Turno {
 // últimos 10 dígitos (sin espacios, guiones ni prefijos), así "299 4123456",
 // "+54 9 2994123456" y "2994123456" caen en la misma ficha.
 model Tutor {
-  id                       String    @id @default(cuid())
+  id                       String                @id @default(cuid())
   nombre                   String
   telefono                 String
-  telefonoClave            String    @unique
+  telefonoClave            String                @unique
   email                    String?
   dni                      String?
   direccion                String?
   notas                    String?
   // Ley 25.326: consentimiento para recibir recordatorios por WhatsApp, con fecha.
-  aceptaRecordatorios      Boolean   @default(false)
+  aceptaRecordatorios      Boolean               @default(false)
   aceptaRecordatoriosFecha DateTime?
   mascotas                 Mascota[]
   turnos                   Turno[]
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  ventas                   Venta[]
+  pagosCuentaCorriente     PagoCuentaCorriente[]
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
 }
 
 model Mascota {
@@ -275,4 +278,250 @@ model Aplicacion {
 
   @@index([mascotaId, productoClave])
   @@index([resuelta, proximaFecha])
+}
+
+// ============================================================================
+// VENTAS, CAJA Y STOCK
+// Reglas (ver src/lib/stock.ts, src/lib/ventas.ts, src/lib/caja.ts):
+//  * Montos SIEMPRE en centavos (Int): nada de Float para plata.
+//  * El stock nunca se edita a mano: cada cambio es un MovimientoStock, y
+//    LoteStock.cantidad / Producto.stock son la suma de esos movimientos
+//    (se guardan para leer rápido; /api/stock/control verifica que coincidan).
+//  * Se puede vender sin stock: queda negativo en el lote genérico del producto.
+//  * Sin caja abierta no se vende, no se anula y no se cobra cuenta corriente.
+//  * Una caja cerrada no se modifica nunca: lo que pasa después va a la caja abierta.
+//  * Nada se borra: las ventas se anulan con motivo.
+// ============================================================================
+
+model CategoriaProducto {
+  id        String     @id @default(cuid())
+  nombre    String     @unique
+  activa    Boolean    @default(true)
+  productos Producto[]
+  createdAt DateTime   @default(now())
+}
+
+model MedioPago {
+  id                   String                @id @default(cuid())
+  nombre               String                @unique
+  activo               Boolean               @default(true)
+  orden                Int                   @default(0)
+  // El efectivo es el único medio que arranca la caja con un monto inicial.
+  esEfectivo           Boolean               @default(false)
+  pagos                VentaPago[]
+  movimientos          MovimientoCaja[]
+  conteos              CajaConteo[]
+  pagosCuentaCorriente PagoCuentaCorriente[]
+}
+
+model Producto {
+  id                  String            @id @default(cuid())
+  nombre              String
+  nombreClave         String // minúsculas, sin acentos: para buscar y evitar duplicados
+  categoria           CategoriaProducto @relation(fields: [categoriaId], references: [id])
+  categoriaId         String
+  precioVenta         Int // centavos
+  costo               Int? // centavos
+  stockMinimo         Int               @default(0)
+  // Con vencimiento: el stock se carga por lote y al vender sale primero lo que vence antes.
+  controlaVencimiento Boolean           @default(false)
+  activo              Boolean           @default(true)
+  stock               Int               @default(0) // suma de sus lotes
+  lotes               LoteStock[]
+  movimientos         MovimientoStock[]
+  ventaItems          VentaItem[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([nombreClave])
+}
+
+// Cada producto tiene un lote "genérico" (codigo y vencimiento null), que es el único
+// que puede quedar negativo (ventas sin stock). Los demás son lotes reales con vencimiento.
+model LoteStock {
+  id          String            @id @default(cuid())
+  producto    Producto          @relation(fields: [productoId], references: [id])
+  productoId  String
+  generico    Boolean           @default(false)
+  codigo      String?
+  vencimiento String? // "2027-03-31"
+  cantidad    Int               @default(0)
+  movimientos MovimientoStock[]
+  createdAt   DateTime          @default(now())
+
+  @@index([productoId])
+}
+
+enum TipoMovimientoStock {
+  INICIAL
+  COMPRA
+  VENTA
+  ANULACION_VENTA
+  AJUSTE
+}
+
+model MovimientoStock {
+  id          String              @id @default(cuid())
+  producto    Producto            @relation(fields: [productoId], references: [id])
+  productoId  String
+  lote        LoteStock           @relation(fields: [loteId], references: [id])
+  loteId      String
+  tipo        TipoMovimientoStock
+  cantidad    Int // con signo: + entra, - sale
+  ventaItem   VentaItem?          @relation(fields: [ventaItemId], references: [id])
+  ventaItemId String?
+  motivo      String?
+  usuario     String
+  createdAt   DateTime            @default(now())
+
+  @@index([productoId, createdAt])
+  @@index([loteId])
+  @@index([ventaItemId])
+}
+
+enum EstadoCaja {
+  ABIERTA
+  CERRADA
+}
+
+// Solo puede haber UNA caja ABIERTA: lo garantiza un índice único parcial creado en
+// la migración (Prisma no los soporta en el schema).
+model Caja {
+  id                   String                @id @default(cuid())
+  estado               EstadoCaja            @default(ABIERTA)
+  abiertaEn            DateTime              @default(now())
+  abiertaPor           String
+  efectivoInicial      Int // centavos
+  cerradaEn            DateTime?
+  cerradaPor           String?
+  observacionesCierre  String?
+  movimientos          MovimientoCaja[]
+  conteos              CajaConteo[]
+  ventas               Venta[]               @relation("VentasDeCaja")
+  anulaciones          Venta[]               @relation("AnulacionesEnCaja")
+  pagosCuentaCorriente PagoCuentaCorriente[]
+
+  @@index([estado])
+}
+
+enum TipoMovimientoCaja {
+  VENTA
+  ANULACION_VENTA
+  COBRO_CUENTA_CORRIENTE
+  GASTO
+  INGRESO
+  RETIRO
+}
+
+model MovimientoCaja {
+  id                    String               @id @default(cuid())
+  caja                  Caja                 @relation(fields: [cajaId], references: [id])
+  cajaId                String
+  medioPago             MedioPago            @relation(fields: [medioPagoId], references: [id])
+  medioPagoId           String
+  tipo                  TipoMovimientoCaja
+  monto                 Int // centavos, con signo: + entra, - sale
+  venta                 Venta?               @relation(fields: [ventaId], references: [id])
+  ventaId               String?
+  pagoCuentaCorriente   PagoCuentaCorriente? @relation(fields: [pagoCuentaCorrienteId], references: [id])
+  pagoCuentaCorrienteId String?
+  descripcion           String?
+  usuario               String
+  createdAt             DateTime             @default(now())
+
+  @@index([cajaId])
+  @@index([ventaId])
+}
+
+// Lo que se contó al cerrar, por medio de pago (esperado lo calcula el sistema).
+model CajaConteo {
+  id          String    @id @default(cuid())
+  caja        Caja      @relation(fields: [cajaId], references: [id])
+  cajaId      String
+  medioPago   MedioPago @relation(fields: [medioPagoId], references: [id])
+  medioPagoId String
+  esperado    Int
+  contado     Int
+
+  @@unique([cajaId, medioPagoId])
+}
+
+enum EstadoVenta {
+  ACTIVA
+  ANULADA
+}
+
+model Venta {
+  id              String           @id @default(cuid())
+  numero          Int              @unique @default(autoincrement())
+  caja            Caja             @relation("VentasDeCaja", fields: [cajaId], references: [id])
+  cajaId          String
+  tutor           Tutor?           @relation(fields: [tutorId], references: [id])
+  tutorId         String?
+  total           Int // centavos
+  // total - pagado = lo que queda en la cuenta corriente del tutor
+  pagado          Int
+  observaciones   String?
+  usuario         String
+  estado          EstadoVenta      @default(ACTIVA)
+  anuladaEn       DateTime?
+  anuladaPor      String?
+  motivoAnulacion String?
+  cajaAnulacion   Caja?            @relation("AnulacionesEnCaja", fields: [cajaAnulacionId], references: [id])
+  cajaAnulacionId String?
+  items           VentaItem[]
+  pagos           VentaPago[]
+  movimientosCaja MovimientoCaja[]
+  createdAt       DateTime         @default(now())
+
+  @@index([cajaId])
+  @@index([tutorId])
+  @@index([createdAt])
+}
+
+model VentaItem {
+  id               String            @id @default(cuid())
+  venta            Venta             @relation(fields: [ventaId], references: [id])
+  ventaId          String
+  producto         Producto?         @relation(fields: [productoId], references: [id])
+  productoId       String?
+  servicio         Servicio?         @relation(fields: [servicioId], references: [id])
+  servicioId       String?
+  descripcion      String // nombre al momento de vender
+  cantidad         Int
+  precioLista      Int // centavos, el precio cargado en el sistema
+  precioUnitario   Int // centavos, el que se cobró (puede tener descuento)
+  subtotal         Int
+  movimientosStock MovimientoStock[]
+
+  @@index([ventaId])
+  @@index([productoId])
+}
+
+model VentaPago {
+  id          String    @id @default(cuid())
+  venta       Venta     @relation(fields: [ventaId], references: [id])
+  ventaId     String
+  medioPago   MedioPago @relation(fields: [medioPagoId], references: [id])
+  medioPagoId String
+  monto       Int
+
+  @@index([ventaId])
+}
+
+// Pago de deuda de cuenta corriente: entra a la caja del día en que se paga.
+model PagoCuentaCorriente {
+  id          String           @id @default(cuid())
+  tutor       Tutor            @relation(fields: [tutorId], references: [id])
+  tutorId     String
+  caja        Caja             @relation(fields: [cajaId], references: [id])
+  cajaId      String
+  medioPago   MedioPago        @relation(fields: [medioPagoId], references: [id])
+  medioPagoId String
+  monto       Int
+  usuario     String
+  movimientos MovimientoCaja[]
+  createdAt   DateTime         @default(now())
+
+  @@index([tutorId])
 }
